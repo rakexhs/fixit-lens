@@ -19,8 +19,8 @@ class Settings(BaseSettings):
     provider_priority: str = "gemini,openai,mock"
 
     gemini_api_key: str = ""
-    gemini_vision_model: str = "gemini-1.5-flash"
-    gemini_text_model: str = "gemini-1.5-flash"
+    gemini_vision_model: str = "gemini-3.5-flash"
+    gemini_text_model: str = "gemini-3.5-flash"
 
     openai_api_key: str = ""
     openai_vision_model: str = "gpt-4o-mini"

@@ -1,26 +1,40 @@
 import base64
-import json
-import re
-
-import httpx
-from tenacity import retry, stop_after_attempt, wait_exponential
 
 from app.config import get_settings
+from app.providers.gemini_interactions import create_interaction, parse_json_output
 from app.vision.base import VisionExtraction, VisionProvider, VisionRequest
 
-GEMINI_URL_TEMPLATE = "https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent"
-
 PROMPT_TEMPLATE = (
-    "You are a device/error identification assistant. Given a photo of a device label, "
-    "error display, warning light, or broken part, extract visible text and identify the "
-    "device and problem. Return ONLY a valid JSON object (no markdown fences) with keys: "
-    "ocr_text (string), device_category (one of router, dishwasher, washing_machine, laptop, "
-    "dangerous, unknown), brand (string or null), model (string or null), "
-    "device_confidence (0-1 float), problem_type (string), error_code (string or null), "
-    "symptom (string), problem_confidence (0-1 float).{hint_suffix}"
+    "You are a visual identification assistant. Identify whatever is in the photo — appliances, "
+    "electronics, furniture, vehicles, tools, food, plants, or everyday objects. "
+    "Extract visible text and describe any damage or issue.{hint_suffix}"
 )
 
-_JSON_FENCE_RE = re.compile(r"```(?:json)?\s*(.*?)\s*```", re.DOTALL)
+VISION_JSON_SCHEMA: dict = {
+    "type": "object",
+    "properties": {
+        "ocr_text": {"type": "string"},
+        "device_category": {
+            "type": "string",
+            "description": "router, dishwasher, washing_machine, laptop, appliance, electronics, vehicle, furniture, general, dangerous, or unknown",
+        },
+        "brand": {"type": "string"},
+        "model": {"type": "string"},
+        "device_confidence": {"type": "number"},
+        "problem_type": {"type": "string"},
+        "error_code": {"type": "string"},
+        "symptom": {"type": "string"},
+        "problem_confidence": {"type": "number"},
+    },
+    "required": [
+        "ocr_text",
+        "device_category",
+        "device_confidence",
+        "problem_type",
+        "symptom",
+        "problem_confidence",
+    ],
+}
 
 
 class GeminiVisionAdapter(VisionProvider):
@@ -32,36 +46,25 @@ class GeminiVisionAdapter(VisionProvider):
     def is_configured(self) -> bool:
         return bool(self.settings.gemini_api_key)
 
-    @retry(stop=stop_after_attempt(3), wait=wait_exponential(multiplier=0.5, max=4))
-    def _call_api(self, image_b64: str, user_hint: str | None) -> dict:
-        hint_suffix = f" Additional user context: {user_hint}" if user_hint else ""
-        prompt = PROMPT_TEMPLATE.format(hint_suffix=hint_suffix)
-
-        url = GEMINI_URL_TEMPLATE.format(model=self.settings.gemini_vision_model)
-        payload = {
-            "contents": [
-                {
-                    "parts": [
-                        {"text": prompt},
-                        {"inline_data": {"mime_type": "image/jpeg", "data": image_b64}},
-                    ]
-                }
-            ],
-            "generationConfig": {"temperature": 0.1},
-        }
-        with httpx.Client(timeout=20.0) as client:
-            response = client.post(url, params={"key": self.settings.gemini_api_key}, json=payload)
-            response.raise_for_status()
-            data = response.json()
-
-        text = data["candidates"][0]["content"]["parts"][0]["text"]
-        fence_match = _JSON_FENCE_RE.search(text)
-        json_text = fence_match.group(1) if fence_match else text
-        return json.loads(json_text)
-
     def extract(self, request: VisionRequest) -> VisionExtraction:
+        hint_suffix = f" Additional user context: {request.user_hint}" if request.user_hint else ""
+        prompt = PROMPT_TEMPLATE.format(hint_suffix=hint_suffix)
         image_b64 = base64.b64encode(request.image_bytes).decode("utf-8")
-        parsed = self._call_api(image_b64, request.user_hint)
+
+        data = create_interaction(
+            self.settings.gemini_api_key,
+            self.settings.gemini_vision_model,
+            [
+                {"type": "text", "text": prompt},
+                {"type": "image", "data": image_b64, "mime_type": "image/jpeg"},
+            ],
+            response_format={
+                "type": "text",
+                "mime_type": "application/json",
+                "schema": VISION_JSON_SCHEMA,
+            },
+        )
+        parsed = parse_json_output(data)
 
         ocr_text = parsed.get("ocr_text", "") or ""
         return VisionExtraction(
