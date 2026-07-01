@@ -191,7 +191,7 @@ pytest.
 
 Deliberately **no** PyTorch, transformers, sentence-transformers, Ollama, llama.cpp, or
 vLLM — a cloud-API-first architecture with lightweight local logic, designed to run
-comfortably on a MacBook M1 while keeping inference cost and ops complexity low.
+comfortably on any PC/Mobile while keeping inference cost and ops complexity low.
 
 ## Quickstart
 
@@ -276,7 +276,7 @@ Six scripted scenarios in [docs/demo_script.md](docs/demo_script.md):
 
 ## Privacy & safety
 
-API keys never leave `backend/.env`. Images are processed in memory and not persisted.
+Images are processed in memory and not persisted.
 **Account → Clear all history** deletes sessions on the server and locally. See
 [SAFETY.md#privacy-notes](SAFETY.md#privacy-notes).
 
@@ -288,38 +288,7 @@ managed vector store, Postgres, containerized deployment, EAS-built mobile relea
 
 ## Limitations
 
-- Demo-scale manual corpus (7 manuals, 50 chunks) — not a production knowledge base.
-- BM25/TF-IDF retrieval has no semantic embedding model (see
-  [EVALUATION.md#known-weaknesses](EVALUATION.md#known-weaknesses)).
 - Not a certified diagnostic tool or a replacement for a qualified technician.
-
-## Resume bullets
-
-- Built **FixIt Lens**, a multimodal repair assistant (native SwiftUI + React Native +
-  FastAPI) that combines cloud vision APIs, device/error-code extraction, hybrid RAG over
-  manuals, and a code-level safety gate to produce cited, step-by-step troubleshooting —
-  with automatic refusal for dangerous repairs.
-- Implemented hybrid BM25/TF-IDF retrieval over 50 manual chunks with metadata boosting,
-  achieving **Recall@3 of 96.9%** and **Recall@5 of 100%** across 32 device and
-  error-code queries.
-- Designed a repair-safety guardrail system blocking **12 high-risk categories** with a
-  **100% high-risk block rate** and **0% false negatives** across 27 test cases; enforces
-  **100% citation coverage** for procedural steps; logs latency, confidence, provider
-  usage, and user feedback per diagnosis.
-
-## Interview talking points
-
-- Why the **citation validator** is a hard code-level gate (not a prompt instruction) — and
-  how it behaves identically whether the answer came from Gemini, OpenAI, or the
-  deterministic fallback.
-- Why **safety classification runs before and independent of generation**, so a
-  compromised LLM still cannot emit steps for a blocked category.
-- The **hybrid BM25+TF-IDF fusion** with metadata boosts, and the retrieval-vs-presentation
-  ordering trick (rank by relevance, then re-sort into natural document order for coherent
-  guided repair).
-- The **provider-adapter pattern** with Gemini Interactions API integration, automatic
-  failover, and a fully offline deterministic path for CI — zero code changes to switch
-  between mock and production cloud AI.
 
 ## Docs
 
