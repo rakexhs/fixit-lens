@@ -1,6 +1,7 @@
 from functools import lru_cache
 from pathlib import Path
 
+from pydantic import field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 BACKEND_DIR = Path(__file__).resolve().parent.parent
@@ -35,6 +36,23 @@ class Settings(BaseSettings):
     require_citations: bool = True
 
     expo_public_api_base_url: str = "http://127.0.0.1:8000"
+
+    @field_validator("database_url")
+    @classmethod
+    def _anchor_relative_sqlite_path(cls, value: str) -> str:
+        """Resolve relative sqlite:/// paths against BACKEND_DIR, not the process cwd.
+
+        Scripts and Makefile targets invoke the backend from different working
+        directories (repo root vs backend/), so a relative path here must not
+        depend on where the process happened to be launched from.
+        """
+        prefix = "sqlite:///"
+        if value.startswith(prefix):
+            raw_path = value[len(prefix) :]
+            if raw_path and not raw_path.startswith("/"):
+                absolute_path = (BACKEND_DIR / raw_path).resolve()
+                return f"{prefix}{absolute_path}"
+        return value
 
     @property
     def provider_order(self) -> list[str]:
