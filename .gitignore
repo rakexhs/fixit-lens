@@ -1,0 +1,43 @@
+# Environment / secrets
+.env
+.env.local
+**/.env
+**/.env.local
+
+# Python
+backend/.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+*.egg-info/
+.mypy_cache/
+.ruff_cache/
+
+# Node / Expo
+node_modules/
+.expo/
+.expo-shared/
+dist/
+build/
+web-build/
+*.tsbuildinfo
+
+# OS
+.DS_Store
+
+# Logs
+*.log
+logs/
+
+# Local databases
+*.db
+*.sqlite
+*.sqlite3
+!backend/data/**/*.db
+
+# Uploaded / generated user content
+backend/data/uploads/
+data/uploads/
+
+# Reports that are regenerated (keep committed eval_report.md as sample, ignore raw run artifacts)
+backend/reports/*.tmp
