@@ -1,0 +1,108 @@
+# FixIt Lens safety rules
+# Core rule enforced in code (safety/policy.py + rag/citation_validator.py):
+#   No source citation + no safety classification = no repair instruction.
+
+blocked_categories:
+  - id: microwave_capacitor
+    label: "Microwave internal repair / capacitor discharge"
+    keywords: ["microwave capacitor", "microwave internal", "discharge capacitor", "microwave high voltage"]
+  - id: crt_discharge
+    label: "CRT discharge"
+    keywords: ["crt discharge", "cathode ray tube", "flyback transformer", "crt tv repair", "crt monitor repair"]
+  - id: gas_appliance
+    label: "Gas appliance repair"
+    keywords: ["gas line", "gas valve", "gas leak", "gas stove repair", "gas water heater repair", "gas furnace repair", "smell of gas"]
+  - id: refrigerant
+    label: "Refrigerant handling"
+    keywords: ["refrigerant", "freon", "coolant line", "compressor coil", "ac coil repair", "r134a", "r410a"]
+  - id: mains_wiring
+    label: "Mains wiring repair"
+    keywords: ["mains wiring", "breaker panel", "circuit panel repair", "rewire outlet", "electrical panel", "live wire repair", "fuse box repair"]
+  - id: swollen_battery
+    label: "Swollen lithium battery handling"
+    keywords: ["swollen battery", "bulging battery", "puffy battery", "battery bulge", "battery swelling"]
+  - id: exposed_wire
+    label: "Exposed wire repair"
+    keywords: ["exposed wire", "frayed wire", "bare wire", "exposed wiring", "frayed cord"]
+  - id: repeated_breaker_trips
+    label: "Repeated breaker trips"
+    keywords: ["breaker keeps tripping", "breaker trips repeatedly", "circuit keeps tripping"]
+  - id: burning_smell_sparks
+    label: "Burning smell or sparks"
+    keywords: ["burning smell", "smells like burning", "sparks", "sparking", "smoke coming from"]
+  - id: water_near_outlet
+    label: "Water near outlet / live electricity"
+    keywords: ["water near outlet", "water near electricity", "flooded outlet", "water on power strip", "wet outlet"]
+  - id: medical_device
+    label: "Medical-device repair"
+    keywords: ["cpap repair", "pacemaker", "glucose monitor repair", "nebulizer repair", "medical device repair", "insulin pump"]
+  - id: vehicle_safety_critical
+    label: "Vehicle brake/airbag/steering repair"
+    keywords: ["brake line", "brake repair", "airbag", "srs system", "steering rack", "steering column repair", "brake bleed"]
+
+high_risk_keywords:
+  - "capacitor"
+  - "high voltage"
+  - "mains voltage"
+  - "gas leak"
+  - "gas line"
+  - "refrigerant"
+  - "swollen battery"
+  - "bulging battery"
+  - "exposed wire"
+  - "frayed wire"
+  - "burning smell"
+  - "sparks"
+  - "smoke"
+  - "water near outlet"
+  - "live wire"
+  - "breaker keeps tripping"
+  - "pacemaker"
+  - "medical device"
+  - "airbag"
+  - "brake line"
+  - "steering"
+  - "crt"
+  - "flyback"
+
+moderate_risk_keywords:
+  - "open the back cover"
+  - "open the case"
+  - "remove the cover"
+  - "internal fan"
+  - "internal component"
+  - "disassemble"
+  - "replace the pump"
+  - "replace the motor"
+  - "screwdriver"
+  - "warranty"
+  - "anti-static"
+
+allowed_safe_actions:
+  - "restart"
+  - "reboot"
+  - "power cycle"
+  - "unplug"
+  - "plug back in"
+  - "check the cable"
+  - "check cable"
+  - "reseat cable"
+  - "clean the filter"
+  - "clean filter"
+  - "clean the vents"
+  - "check for updates"
+  - "factory reset"
+  - "check error code"
+  - "read the manual"
+  - "check the drain hose"
+  - "check air gap"
+
+required_warning_phrases:
+  moderate_risk: "This step involves opening the device. Proceed only if you are comfortable using small tools and following the exact steps below; stop if anything feels stuck or unclear."
+  water_electricity: "Always disconnect power before touching any area near water or exposed electrical parts."
+  professional_required: "This issue may involve high-voltage, gas, fire, or injury risk. Please contact a qualified technician instead of attempting a repair yourself."
+
+professional_required_conditions:
+  - "risk_level >= 3"
+  - "blocked_category_matched"
+  - "no_valid_citations_for_any_step"
