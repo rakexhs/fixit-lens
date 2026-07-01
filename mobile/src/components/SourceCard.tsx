@@ -1,52 +1,68 @@
 import React from 'react';
 import { StyleSheet, Text, View } from 'react-native';
-import { colors } from '../theme/colors';
-import { spacing } from '../theme/spacing';
-import { typography } from '../theme/typography';
-import type { Source } from '../services/types';
 import { GlassCard } from './GlassCard';
+import { Icon } from './Icon';
+import { colors, radius, spacing, typography } from '../theme';
+import type { Source } from '../services/types';
 
 export function SourceCard({ source }: { source: Source }) {
   return (
     <GlassCard style={styles.card}>
       <View style={styles.headerRow}>
-        <Text style={typography.bodyStrong}>{source.title}</Text>
-        <Text style={styles.score}>{source.score.toFixed(2)}</Text>
+        <View style={styles.titleWrap}>
+          <Icon name="book" size={16} color={colors.accentAlt} />
+          <Text style={[typography.bodyStrong, styles.title]} numberOfLines={2}>{source.title}</Text>
+        </View>
+        <View style={styles.scorePill}>
+          <Text style={styles.scoreText}>{source.score.toFixed(2)}</Text>
+        </View>
       </View>
-      <Text style={typography.caption}>{source.section}{source.page ? ` · p.${source.page}` : ''}</Text>
-      <Text style={[typography.body, styles.snippet]}>{source.snippet}</Text>
-      <Text style={styles.whyMatched}>Why matched: {source.why_matched}</Text>
-      <Text style={styles.citationId}>{source.id}</Text>
+
+      <Text style={styles.section}>
+        {source.section}{source.page ? `  ·  p.${source.page}` : ''}
+      </Text>
+      <Text style={[typography.callout, styles.snippet]}>{source.snippet}</Text>
+
+      <View style={styles.matchRow}>
+        <Icon name="sparkles" size={12} color={colors.accent} />
+        <Text style={styles.matchText}>{source.why_matched}</Text>
+      </View>
+      <Text style={typography.mono} numberOfLines={1}>{source.id}</Text>
     </GlassCard>
   );
 }
 
 const styles = StyleSheet.create({
-  card: {
-    marginBottom: spacing.md,
-  },
+  card: { marginBottom: spacing.md },
   headerRow: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'flex-start',
+    justifyContent: 'space-between',
+    gap: spacing.sm,
   },
-  score: {
-    color: colors.cyan,
-    fontWeight: '700',
-    fontSize: 13,
+  titleWrap: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: spacing.sm,
   },
-  snippet: {
-    marginTop: spacing.sm,
+  title: { flex: 1 },
+  scorePill: {
+    backgroundColor: colors.accentAlt + '1A',
+    borderColor: colors.accentAlt + '40',
+    borderWidth: StyleSheet.hairlineWidth,
+    borderRadius: radius.sm,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: 3,
   },
-  whyMatched: {
-    marginTop: spacing.sm,
-    color: colors.violet,
-    fontSize: 12,
-    fontWeight: '600',
+  scoreText: { color: colors.accentAlt, fontWeight: '800', fontSize: 12.5 },
+  section: { marginTop: spacing.sm, ...typography.caption },
+  snippet: { marginTop: spacing.sm },
+  matchRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    marginTop: spacing.md,
   },
-  citationId: {
-    marginTop: spacing.xs,
-    color: colors.textTertiary,
-    fontSize: 11,
-  },
+  matchText: { color: colors.accent, fontSize: 12, fontWeight: '600', flex: 1 },
 });

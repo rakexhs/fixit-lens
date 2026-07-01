@@ -3,19 +3,18 @@ import { StyleSheet, Text, View } from 'react-native';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { RootStackParamList } from '../navigation/RootNavigator';
-import { GradientBackground } from '../components/GradientBackground';
+import { Screen } from '../components/Screen';
 import { LoadingTimeline } from '../components/LoadingTimeline';
 import { ErrorState } from '../components/ErrorState';
 import { EmptyState } from '../components/EmptyState';
-import { spacing } from '../theme/spacing';
-import { typography } from '../theme/typography';
+import { Icon } from '../components/Icon';
+import { colors, radius, spacing, typography } from '../theme';
 import { useRepairSessionStore } from '../state/repairSessionStore';
 import * as api from '../services/apiClient';
 import { ApiError } from '../services/apiClient';
 
 type Nav = NativeStackNavigationProp<RootStackParamList, 'AnalyzeProgress'>;
 type Rt = RouteProp<RootStackParamList, 'AnalyzeProgress'>;
-
 type Status = 'loading' | 'error' | 'unusable_image';
 
 export function AnalyzeProgressScreen() {
@@ -36,21 +35,13 @@ export function AnalyzeProgressScreen() {
     try {
       if (route.params.mode === 'image') {
         if (!capturedImageUri) throw new ApiError('No image was captured. Please retake the photo.');
-
-        const analyzeResult = await api.analyzeImage(
-          capturedImageUri,
-          'capture.jpg',
-          'image/jpeg',
-          userHint ?? undefined
-        );
+        const analyzeResult = await api.analyzeImage(capturedImageUri, 'capture.jpg', 'image/jpeg', userHint ?? undefined);
         setAnalyzeResult(analyzeResult);
-
         if (!analyzeResult.image_quality.usable) {
           setIssues(analyzeResult.image_quality.issues);
           setStatus('unusable_image');
           return;
         }
-
         const diagnoseResult = await api.diagnose({
           session_id: analyzeResult.session_id,
           device_category: analyzeResult.detected_device.category,
@@ -68,70 +59,76 @@ export function AnalyzeProgressScreen() {
         navigation.replace('Diagnosis');
       }
     } catch (err) {
-      const msg = err instanceof ApiError ? err.message : 'Something went wrong while analyzing this request.';
-      setMessage(msg);
+      setMessage(err instanceof ApiError ? err.message : 'Something went wrong while analyzing this request.');
       setStatus('error');
     }
   }, [route.params.mode, capturedImageUri, userHint, pendingDiagnoseRequest, navigation, setAnalyzeResult, setDiagnoseResult]);
 
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- run() fetches on mount; its setState calls happen after awaiting the API response, not synchronously.
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- run() sets state only after awaiting the API, not synchronously.
     void run();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   if (status === 'error') {
     return (
-      <GradientBackground>
+      <Screen>
         <View style={styles.centered}>
           <ErrorState message={message} onRetry={run} />
         </View>
-      </GradientBackground>
+      </Screen>
     );
   }
 
   if (status === 'unusable_image') {
     return (
-      <GradientBackground>
+      <Screen>
         <View style={styles.centered}>
           <EmptyState
-            icon="🖼️"
-            title="Image needs a retake"
+            icon="retake"
+            title="Let's retake that"
             message={issues[0] ?? 'This image is too low quality to analyze confidently.'}
             actionLabel="Retake photo"
             onAction={() => navigation.navigate('HomeCamera')}
           />
         </View>
-      </GradientBackground>
+      </Screen>
     );
   }
 
   return (
-    <GradientBackground>
+    <Screen>
       <View style={styles.centered}>
-        <Text style={typography.title}>Analyzing…</Text>
-        <Text style={[typography.body, styles.subtitle]}>This usually takes a few seconds.</Text>
-        <View style={styles.timelineWrapper}>
+        <View style={styles.hero}>
+          <View style={styles.pulseRing}>
+            <Icon name="sparkles" size={28} color={colors.accentAlt} />
+          </View>
+          <Text style={[typography.title, styles.heading]}>Analyzing</Text>
+          <Text style={[typography.body, styles.sub]}>Grounding every step in trusted manuals.</Text>
+        </View>
+        <View style={styles.timeline}>
           <LoadingTimeline />
         </View>
       </View>
-    </GradientBackground>
+    </Screen>
   );
 }
 
 const styles = StyleSheet.create({
-  centered: {
-    flex: 1,
+  centered: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: spacing.xl },
+  hero: { alignItems: 'center', marginBottom: spacing.xxxl },
+  pulseRing: {
+    width: 76,
+    height: 76,
+    borderRadius: radius.xxl,
+    backgroundColor: colors.accentAlt + '14',
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: colors.accentAlt + '3D',
     alignItems: 'center',
     justifyContent: 'center',
-    paddingHorizontal: spacing.xl,
+    marginBottom: spacing.lg,
   },
-  subtitle: {
-    marginTop: spacing.xs,
-    textAlign: 'center',
-  },
-  timelineWrapper: {
-    marginTop: spacing.xl,
-    alignSelf: 'stretch',
-  },
+  heading: { marginTop: spacing.xs },
+  sub: { marginTop: spacing.xs, textAlign: 'center' },
+  timeline: { alignSelf: 'stretch', paddingLeft: spacing.xl },
 });

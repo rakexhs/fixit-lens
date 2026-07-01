@@ -35,7 +35,7 @@ const navTheme = {
     card: colors.background,
     text: colors.textPrimary,
     border: colors.divider,
-    primary: colors.cyan,
+    primary: colors.accentAlt,
   },
 };
 

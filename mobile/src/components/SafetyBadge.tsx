@@ -1,35 +1,30 @@
 import React from 'react';
 import { StyleSheet, Text, View } from 'react-native';
-import { colors } from '../theme/colors';
-import { radius, spacing } from '../theme/spacing';
+import { Icon, IconName } from './Icon';
+import { radius, riskColor, spacing } from '../theme';
 import { riskLevelLabel } from '../utils/formatters';
 
 interface Props {
   riskLevel: number;
   blocked: boolean;
+  compact?: boolean;
 }
 
-function colorForRisk(level: number): string {
-  switch (level) {
-    case 0:
-      return colors.riskSafe;
-    case 1:
-      return colors.riskLow;
-    case 2:
-      return colors.riskModerate;
-    default:
-      return colors.riskHigh;
-  }
-}
-
-export function SafetyBadge({ riskLevel, blocked }: Props) {
-  const tint = colorForRisk(riskLevel);
+export function SafetyBadge({ riskLevel, blocked, compact = false }: Props) {
+  const tint = riskColor(riskLevel);
   const label = blocked ? 'Professional required' : riskLevelLabel(riskLevel);
+  const icon: IconName = blocked ? 'block' : riskLevel >= 2 ? 'shieldAlert' : 'shield';
 
   return (
-    <View style={[styles.badge, { borderColor: tint + '66', backgroundColor: tint + '20' }]}>
-      <Text style={[styles.icon, { color: tint }]}>{blocked ? '⛔' : '🛡'}</Text>
-      <Text style={[styles.label, { color: tint }]}>{label}</Text>
+    <View
+      style={[
+        styles.badge,
+        compact && styles.compact,
+        { borderColor: tint + '59', backgroundColor: tint + '1A' },
+      ]}
+    >
+      <Icon name={icon} size={compact ? 12 : 14} color={tint} />
+      <Text style={[styles.label, compact && styles.labelCompact, { color: tint }]}>{label}</Text>
     </View>
   );
 }
@@ -39,17 +34,16 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     alignSelf: 'flex-start',
-    borderWidth: 1,
+    borderWidth: StyleSheet.hairlineWidth,
     borderRadius: radius.pill,
     paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
+    paddingVertical: 7,
     gap: 6,
   },
-  icon: {
-    fontSize: 14,
+  compact: {
+    paddingHorizontal: spacing.sm + 2,
+    paddingVertical: 5,
   },
-  label: {
-    fontSize: 13,
-    fontWeight: '700',
-  },
+  label: { fontSize: 13, fontWeight: '700', letterSpacing: -0.1 },
+  labelCompact: { fontSize: 11.5 },
 });

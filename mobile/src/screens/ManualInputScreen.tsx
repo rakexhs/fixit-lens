@@ -1,26 +1,29 @@
 import React, { useState } from 'react';
-import { Alert, KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Alert, KeyboardAvoidingView, Platform, StyleSheet, Text, TextInput, View } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { RootStackParamList } from '../navigation/RootNavigator';
-import { GradientBackground } from '../components/GradientBackground';
+import { Screen } from '../components/Screen';
+import { AppHeader } from '../components/AppHeader';
 import { GlassCard } from '../components/GlassCard';
+import { SegmentedControl } from '../components/SegmentedControl';
+import { AnimatedPressable } from '../components/AnimatedPressable';
 import { PrimaryButton } from '../components/PrimaryButton';
-import { colors } from '../theme/colors';
-import { radius, spacing } from '../theme/spacing';
-import { typography } from '../theme/typography';
+import { colors, radius, spacing, typography } from '../theme';
+import { titleCase } from '../utils/formatters';
 import { useRepairSessionStore } from '../state/repairSessionStore';
 import * as api from '../services/apiClient';
 import { ApiError } from '../services/apiClient';
 
 type Nav = NativeStackNavigationProp<RootStackParamList, 'ManualInput'>;
+type Mode = 'ask' | 'upload';
 
 const CATEGORIES = ['router', 'dishwasher', 'washing_machine', 'laptop', 'other'];
 
 export function ManualInputScreen() {
   const navigation = useNavigation<Nav>();
   const setPendingDiagnoseRequest = useRepairSessionStore((s) => s.setPendingDiagnoseRequest);
-  const [mode, setMode] = useState<'ask' | 'upload'>('ask');
+  const [mode, setMode] = useState<Mode>('ask');
 
   const [category, setCategory] = useState<string | null>(null);
   const [brand, setBrand] = useState('');
@@ -32,7 +35,7 @@ export function ManualInputScreen() {
   const [manualText, setManualText] = useState('');
   const [uploading, setUploading] = useState(false);
 
-  const handleAskSubmit = () => {
+  const handleAsk = () => {
     setPendingDiagnoseRequest({
       device_category: category === 'other' ? null : category,
       brand: brand.trim() || null,
@@ -44,15 +47,15 @@ export function ManualInputScreen() {
     navigation.navigate('AnalyzeProgress', { mode: 'text' });
   };
 
-  const handleUploadSubmit = async () => {
+  const handleUpload = async () => {
     if (!manualText.trim()) {
       Alert.alert('Add manual text', 'Paste or type the manual content before uploading.');
       return;
     }
     setUploading(true);
     try {
-      const result = await api.uploadManualText(manualText, manualTitle || undefined, category ?? undefined, brand || undefined, model || undefined);
-      Alert.alert('Manual indexed', `${result.chunks_indexed} section(s) added as a priority source.`);
+      const r = await api.uploadManualText(manualText, manualTitle || undefined, category ?? undefined, brand || undefined, model || undefined);
+      Alert.alert('Manual indexed', `${r.chunks_indexed} section(s) added as a priority source.`);
       setManualText('');
       setManualTitle('');
     } catch (err) {
@@ -63,197 +66,126 @@ export function ManualInputScreen() {
   };
 
   return (
-    <GradientBackground>
-      <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={styles.flex}>
-        <ScrollView contentContainerStyle={styles.scrollContent}>
-          <Text style={typography.title}>Type it in</Text>
-          <Text style={[typography.body, styles.subtitle]}>
-            Describe the device and issue, or add your own manual as a trusted source.
-          </Text>
+    <Screen scroll keyboardShouldPersistTaps contentStyle={styles.scroll}>
+      <AppHeader title="Type it in" />
+      <Text style={[typography.body, styles.sub]}>
+        Describe the device and issue, or add your own manual as a trusted source.
+      </Text>
 
-          <View style={styles.toggleRow}>
-            <Pressable
-              onPress={() => setMode('ask')}
-              style={[styles.toggleButton, mode === 'ask' && styles.toggleButtonActive]}
-            >
-              <Text style={[styles.toggleLabel, mode === 'ask' && styles.toggleLabelActive]}>Ask about an issue</Text>
-            </Pressable>
-            <Pressable
-              onPress={() => setMode('upload')}
-              style={[styles.toggleButton, mode === 'upload' && styles.toggleButtonActive]}
-            >
-              <Text style={[styles.toggleLabel, mode === 'upload' && styles.toggleLabelActive]}>Upload a manual</Text>
-            </Pressable>
-          </View>
+      <View style={styles.segment}>
+        <SegmentedControl<Mode>
+          segments={[{ value: 'ask', label: 'Ask about an issue' }, { value: 'upload', label: 'Upload a manual' }]}
+          value={mode}
+          onChange={setMode}
+        />
+      </View>
 
-          <GlassCard style={styles.formCard}>
-            <Text style={typography.label}>DEVICE CATEGORY</Text>
-            <View style={styles.chipRow}>
-              {CATEGORIES.map((c) => (
-                <Pressable
-                  key={c}
-                  onPress={() => setCategory(c)}
-                  style={[styles.categoryChip, category === c && styles.categoryChipActive]}
-                >
-                  <Text style={[styles.categoryChipText, category === c && styles.categoryChipTextActive]}>{c}</Text>
-                </Pressable>
-              ))}
-            </View>
+      <GlassCard style={styles.card}>
+        <Text style={typography.overline}>Device category</Text>
+        <View style={styles.chipRow}>
+          {CATEGORIES.map((c) => {
+            const active = category === c;
+            return (
+              <AnimatedPressable key={c} haptic="selection" scaleTo={0.95} onPress={() => setCategory(c)} style={[styles.chip, active && styles.chipActive]}>
+                <Text style={[styles.chipText, active && styles.chipTextActive]}>{titleCase(c)}</Text>
+              </AnimatedPressable>
+            );
+          })}
+        </View>
 
-            {mode === 'ask' ? (
-              <>
-                <LabeledInput label="BRAND (OPTIONAL)" value={brand} onChangeText={setBrand} placeholder="e.g. TP-Link" />
-                <LabeledInput label="MODEL (OPTIONAL)" value={model} onChangeText={setModel} placeholder="e.g. Archer AX55" />
-                <LabeledInput label="ERROR CODE (OPTIONAL)" value={errorCode} onChangeText={setErrorCode} placeholder="e.g. E24" />
-                <LabeledInput
-                  label="WHAT'S HAPPENING?"
-                  value={symptom}
-                  onChangeText={setSymptom}
-                  placeholder="e.g. red internet light, no connection"
-                  multiline
-                />
-                <PrimaryButton label="Get diagnosis" onPress={handleAskSubmit} style={styles.submitButton} />
-              </>
-            ) : (
-              <>
-                <LabeledInput label="MANUAL TITLE (OPTIONAL)" value={manualTitle} onChangeText={setManualTitle} placeholder="e.g. My Router Manual" />
-                <LabeledInput label="BRAND (OPTIONAL)" value={brand} onChangeText={setBrand} placeholder="e.g. TP-Link" />
-                <LabeledInput label="MODEL (OPTIONAL)" value={model} onChangeText={setModel} placeholder="e.g. Archer AX55" />
-                <LabeledInput
-                  label="MANUAL TEXT"
-                  value={manualText}
-                  onChangeText={setManualText}
-                  placeholder="Paste manual text here. Use ## headings to separate sections."
-                  multiline
-                  numberOfLines={8}
-                />
-                <PrimaryButton label="Upload manual" onPress={handleUploadSubmit} loading={uploading} style={styles.submitButton} />
-              </>
-            )}
-          </GlassCard>
-        </ScrollView>
-      </KeyboardAvoidingView>
-    </GradientBackground>
+        {mode === 'ask' ? (
+          <>
+            <Field label="Brand" optional value={brand} onChangeText={setBrand} placeholder="TP-Link" />
+            <Field label="Model" optional value={model} onChangeText={setModel} placeholder="Archer AX55" />
+            <Field label="Error code" optional value={errorCode} onChangeText={setErrorCode} placeholder="E24" autoCapitalize="characters" />
+            <Field label="What's happening?" value={symptom} onChangeText={setSymptom} placeholder="Red internet light, no connection" multiline />
+            <PrimaryButton label="Get diagnosis" icon="sparkles" fullWidth onPress={handleAsk} style={styles.submit} />
+          </>
+        ) : (
+          <>
+            <Field label="Manual title" optional value={manualTitle} onChangeText={setManualTitle} placeholder="My Router Manual" />
+            <Field label="Brand" optional value={brand} onChangeText={setBrand} placeholder="TP-Link" />
+            <Field label="Model" optional value={model} onChangeText={setModel} placeholder="Archer AX55" />
+            <Field label="Manual text" value={manualText} onChangeText={setManualText} placeholder="Paste manual text. Use ## headings to separate sections." multiline tall />
+            <PrimaryButton label="Upload manual" icon="upload" fullWidth loading={uploading} onPress={handleUpload} style={styles.submit} />
+          </>
+        )}
+      </GlassCard>
+      <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} />
+    </Screen>
   );
 }
 
-function LabeledInput({
+function Field({
   label,
   value,
   onChangeText,
   placeholder,
+  optional,
   multiline,
-  numberOfLines,
+  tall,
+  autoCapitalize,
 }: {
   label: string;
   value: string;
-  onChangeText: (text: string) => void;
+  onChangeText: (t: string) => void;
   placeholder: string;
+  optional?: boolean;
   multiline?: boolean;
-  numberOfLines?: number;
+  tall?: boolean;
+  autoCapitalize?: 'none' | 'characters' | 'words' | 'sentences';
 }) {
+  const [focused, setFocused] = useState(false);
   return (
-    <View style={styles.inputBlock}>
-      <Text style={typography.label}>{label}</Text>
+    <View style={styles.field}>
+      <Text style={typography.overline}>
+        {label}{optional ? '  ·  optional' : ''}
+      </Text>
       <TextInput
         value={value}
         onChangeText={onChangeText}
         placeholder={placeholder}
-        placeholderTextColor={colors.textTertiary}
+        placeholderTextColor={colors.textFaint}
         multiline={multiline}
-        numberOfLines={numberOfLines}
-        style={[styles.input, multiline && styles.inputMultiline]}
+        autoCapitalize={autoCapitalize}
+        onFocus={() => setFocused(true)}
+        onBlur={() => setFocused(false)}
+        style={[styles.input, multiline && styles.inputMulti, tall && styles.inputTall, focused && styles.inputFocused]}
       />
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  flex: {
-    flex: 1,
-  },
-  scrollContent: {
-    padding: spacing.lg,
-    paddingTop: spacing.xxl,
-    paddingBottom: spacing.xxl,
-  },
-  subtitle: {
-    marginTop: spacing.xs,
-  },
-  toggleRow: {
-    flexDirection: 'row',
-    backgroundColor: colors.surface,
+  scroll: { paddingTop: spacing.sm },
+  sub: { marginTop: spacing.xs },
+  segment: { marginTop: spacing.xl },
+  card: { marginTop: spacing.lg },
+  chipRow: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm, marginTop: spacing.md, marginBottom: spacing.sm },
+  chip: {
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: colors.surfaceBorderStrong,
     borderRadius: radius.pill,
-    borderWidth: 1,
-    borderColor: colors.surfaceBorder,
-    padding: 4,
-    marginTop: spacing.lg,
+    paddingHorizontal: spacing.lg,
+    paddingVertical: 8,
+    backgroundColor: colors.surfaceHigh,
   },
-  toggleButton: {
-    flex: 1,
-    paddingVertical: spacing.sm,
-    borderRadius: radius.pill,
-    alignItems: 'center',
-  },
-  toggleButtonActive: {
-    backgroundColor: colors.surfaceElevated,
-  },
-  toggleLabel: {
-    color: colors.textSecondary,
-    fontWeight: '600',
-    fontSize: 13,
-  },
-  toggleLabelActive: {
-    color: colors.textPrimary,
-  },
-  formCard: {
-    marginTop: spacing.lg,
-  },
-  chipRow: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: spacing.sm,
-    marginTop: spacing.sm,
-    marginBottom: spacing.md,
-  },
-  categoryChip: {
-    borderWidth: 1,
-    borderColor: colors.surfaceBorder,
-    borderRadius: radius.pill,
-    paddingHorizontal: spacing.md,
-    paddingVertical: 6,
-  },
-  categoryChipActive: {
-    backgroundColor: colors.cyan + '22',
-    borderColor: colors.cyan,
-  },
-  categoryChipText: {
-    color: colors.textSecondary,
-    fontSize: 12,
-    fontWeight: '600',
-  },
-  categoryChipTextActive: {
-    color: colors.cyan,
-  },
-  inputBlock: {
-    marginTop: spacing.md,
-  },
+  chipActive: { backgroundColor: colors.accentAlt + '22', borderColor: colors.accentAlt },
+  chipText: { color: colors.textSecondary, fontSize: 13, fontWeight: '600' },
+  chipTextActive: { color: colors.accentAlt },
+  field: { marginTop: spacing.lg, gap: spacing.sm },
   input: {
-    marginTop: spacing.xs,
-    backgroundColor: colors.surfaceElevated,
+    backgroundColor: colors.surfaceHigh,
     borderRadius: radius.md,
-    borderWidth: 1,
+    borderWidth: StyleSheet.hairlineWidth,
     borderColor: colors.surfaceBorder,
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm + 2,
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.md + 2,
     color: colors.textPrimary,
     fontSize: 15,
   },
-  inputMultiline: {
-    minHeight: 96,
-    textAlignVertical: 'top',
-  },
-  submitButton: {
-    marginTop: spacing.lg,
-  },
+  inputMulti: { minHeight: 88, textAlignVertical: 'top', paddingTop: spacing.md },
+  inputTall: { minHeight: 140 },
+  inputFocused: { borderColor: colors.accentAlt },
+  submit: { marginTop: spacing.xl },
 });

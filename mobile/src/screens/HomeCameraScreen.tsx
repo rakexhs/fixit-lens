@@ -1,5 +1,6 @@
 import React, { useRef, useState } from 'react';
-import { Platform, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Platform, StyleSheet, Text, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import * as ImagePicker from 'expo-image-picker';
 import { useNavigation } from '@react-navigation/native';
@@ -8,11 +9,10 @@ import type { RootStackParamList } from '../navigation/RootNavigator';
 import { GradientBackground } from '../components/GradientBackground';
 import { CameraOverlay } from '../components/CameraOverlay';
 import { CaptureButton } from '../components/CaptureButton';
-import { PrimaryButton } from '../components/PrimaryButton';
+import { AnimatedPressable } from '../components/AnimatedPressable';
+import { Icon } from '../components/Icon';
 import { EmptyState } from '../components/EmptyState';
-import { colors } from '../theme/colors';
-import { spacing } from '../theme/spacing';
-import { typography } from '../theme/typography';
+import { colors, radius, spacing, typography } from '../theme';
 import { useRepairSessionStore } from '../state/repairSessionStore';
 
 type Nav = NativeStackNavigationProp<RootStackParamList, 'HomeCamera'>;
@@ -38,159 +38,182 @@ export function HomeCameraScreen() {
       const photo = await cameraRef.current.takePictureAsync({ quality: 0.85 });
       if (photo?.uri) goToPreview(photo.uri);
     } catch {
-      // ignore; user can retry or use library upload
+      // user can retry or use library
     } finally {
       setIsCapturing(false);
     }
   };
 
   const handlePickFromLibrary = async () => {
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      quality: 0.85,
-    });
-    if (!result.canceled && result.assets[0]) {
-      goToPreview(result.assets[0].uri);
-    }
+    const result = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ['images'], quality: 0.85 });
+    if (!result.canceled && result.assets[0]) goToPreview(result.assets[0].uri);
   };
 
   const showCamera = permission?.granted && Platform.OS !== 'web';
 
   return (
     <GradientBackground>
-      <View style={styles.header}>
-        <View>
-          <Text style={typography.display}>FixIt Lens</Text>
-          <Text style={[typography.body, styles.subtitle]}>Camera-guided AI repair assistant</Text>
-        </View>
-        <Pressable onPress={() => navigation.navigate('Settings')} style={styles.iconButton}>
-          <Text style={styles.iconText}>⚙️</Text>
-        </Pressable>
-      </View>
-
-      <View style={styles.cameraArea}>
-        {showCamera ? (
-          <CameraView ref={cameraRef} style={StyleSheet.absoluteFill} facing="back" />
-        ) : (
-          <View style={[StyleSheet.absoluteFill, styles.cameraFallback]} />
-        )}
-        <CameraOverlay />
-        {!permission?.granted && Platform.OS !== 'web' && (
-          <View style={styles.permissionOverlay}>
-            <EmptyState
-              icon="📷"
-              title="Camera access needed"
-              message="Allow camera access to scan device labels, error codes, and warning lights directly."
-              actionLabel="Enable camera"
-              onAction={requestPermission}
-            />
+      <SafeAreaView style={styles.safe} edges={['top', 'bottom']}>
+        {/* Header */}
+        <View style={styles.header}>
+          <View style={styles.brandRow}>
+            <View style={styles.logoMark}>
+              <Icon name="scan" size={20} color={colors.accentAlt} />
+            </View>
+            <View>
+              <Text style={typography.title2}>FixIt Lens</Text>
+              <Text style={typography.caption}>Camera-guided repair assistant</Text>
+            </View>
           </View>
-        )}
-      </View>
-
-      <View style={styles.controls}>
-        <View style={styles.captureRow}>
-          <View style={styles.sideButton} />
-          <CaptureButton onPress={handleCapture} disabled={!showCamera || isCapturing} />
-          <Pressable style={styles.sideButton} onPress={handlePickFromLibrary}>
-            <Text style={styles.sideButtonText}>📁</Text>
-          </Pressable>
+          <AnimatedPressable haptic="light" onPress={() => navigation.navigate('Settings')} style={styles.headerIcon}>
+            <Icon name="settings" size={20} color={colors.textPrimary} />
+          </AnimatedPressable>
         </View>
 
-        <View style={styles.secondaryRow}>
-          <PrimaryButton
-            label="Type error code instead"
-            variant="secondary"
-            onPress={() => navigation.navigate('ManualInput')}
-            style={styles.secondaryButton}
-          />
-          <PrimaryButton
-            label="History"
-            variant="secondary"
-            onPress={() => navigation.navigate('History')}
-            style={styles.secondaryButton}
-          />
+        {/* Viewfinder */}
+        <View style={styles.viewfinder}>
+          {showCamera ? (
+            <CameraView ref={cameraRef} style={StyleSheet.absoluteFill} facing="back" />
+          ) : (
+            <View style={[StyleSheet.absoluteFill, styles.fallback]} />
+          )}
+          <View style={styles.overlayCenter}>
+            <CameraOverlay />
+          </View>
+
+          {!permission?.granted && Platform.OS !== 'web' && (
+            <View style={styles.permission}>
+              <EmptyState
+                icon="camera"
+                title="Camera access needed"
+                message="Allow camera access to scan device labels, error codes, and warning lights."
+                actionLabel="Enable camera"
+                onAction={requestPermission}
+              />
+            </View>
+          )}
+
+          {Platform.OS === 'web' && (
+            <View style={styles.webNote}>
+              <Icon name="info" size={14} color={colors.textTertiary} />
+              <Text style={typography.caption}>Live camera is available on the iOS app. Use the gallery to test here.</Text>
+            </View>
+          )}
         </View>
-      </View>
+
+        {/* Controls */}
+        <View style={styles.controls}>
+          <View style={styles.captureRow}>
+            <AnimatedPressable haptic="light" onPress={handlePickFromLibrary} style={styles.sideBtn}>
+              <Icon name="gallery" size={22} color={colors.textPrimary} />
+            </AnimatedPressable>
+            <CaptureButton onPress={handleCapture} disabled={!showCamera || isCapturing} />
+            <AnimatedPressable haptic="light" onPress={() => navigation.navigate('ManualInput')} style={styles.sideBtn}>
+              <Icon name="keyboard" size={22} color={colors.textPrimary} />
+            </AnimatedPressable>
+          </View>
+
+          <View style={styles.pillRow}>
+            <AnimatedPressable haptic="light" onPress={() => navigation.navigate('ManualInput')} style={styles.pill}>
+              <Icon name="keyboard" size={16} color={colors.accentAlt} />
+              <Text style={typography.footnote}>Type error code</Text>
+            </AnimatedPressable>
+            <AnimatedPressable haptic="light" onPress={() => navigation.navigate('History')} style={styles.pill}>
+              <Icon name="history" size={16} color={colors.accentAlt} />
+              <Text style={typography.footnote}>History</Text>
+            </AnimatedPressable>
+          </View>
+        </View>
+      </SafeAreaView>
     </GradientBackground>
   );
 }
 
 const styles = StyleSheet.create({
+  safe: { flex: 1 },
   header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
-    paddingHorizontal: spacing.lg,
-    paddingTop: spacing.xxl,
-  },
-  subtitle: {
-    marginTop: spacing.xs,
-  },
-  iconButton: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: colors.surface,
-    borderWidth: 1,
-    borderColor: colors.surfaceBorder,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  iconText: {
-    fontSize: 18,
-  },
-  cameraArea: {
-    flex: 1,
-    marginTop: spacing.lg,
-    marginHorizontal: spacing.lg,
-    borderRadius: 28,
-    overflow: 'hidden',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  cameraFallback: {
-    backgroundColor: '#12141C',
-  },
-  permissionOverlay: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    backgroundColor: colors.overlay,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  controls: {
-    paddingHorizontal: spacing.lg,
-    paddingVertical: spacing.lg,
-  },
-  captureRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: spacing.xl,
+    paddingTop: spacing.sm,
   },
-  sideButton: {
-    width: 52,
-    height: 52,
-    borderRadius: 26,
+  brandRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.md },
+  logoMark: {
+    width: 42,
+    height: 42,
+    borderRadius: radius.md,
+    backgroundColor: colors.accentAlt + '18',
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: colors.accentAlt + '3D',
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  headerIcon: {
+    width: 42,
+    height: 42,
+    borderRadius: radius.pill,
     backgroundColor: colors.surface,
-    borderWidth: 1,
+    borderWidth: StyleSheet.hairlineWidth,
     borderColor: colors.surfaceBorder,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-  sideButtonText: {
-    fontSize: 20,
-  },
-  secondaryRow: {
-    flexDirection: 'row',
-    gap: spacing.sm,
-    marginTop: spacing.lg,
-  },
-  secondaryButton: {
+  viewfinder: {
     flex: 1,
+    marginTop: spacing.xl,
+    marginHorizontal: spacing.xl,
+    borderRadius: radius.xxl,
+    overflow: 'hidden',
+    backgroundColor: '#0E1017',
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: colors.surfaceBorderStrong,
+  },
+  fallback: { backgroundColor: '#0E1017' },
+  overlayCenter: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, alignItems: 'center', justifyContent: 'center' },
+  permission: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: colors.overlay, alignItems: 'center', justifyContent: 'center' },
+  webNote: {
+    position: 'absolute',
+    bottom: spacing.lg,
+    left: spacing.lg,
+    right: spacing.lg,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    backgroundColor: colors.scrim,
+    borderRadius: radius.md,
+    paddingVertical: spacing.sm,
+    paddingHorizontal: spacing.md,
+  },
+  controls: { paddingHorizontal: spacing.xl, paddingTop: spacing.xl, paddingBottom: spacing.sm },
+  captureRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: spacing.xxl,
+  },
+  sideBtn: {
+    width: 54,
+    height: 54,
+    borderRadius: radius.pill,
+    backgroundColor: colors.surface,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: colors.surfaceBorder,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  pillRow: { flexDirection: 'row', gap: spacing.md, marginTop: spacing.xl },
+  pill: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: spacing.sm,
+    backgroundColor: colors.surface,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: colors.surfaceBorder,
+    borderRadius: radius.pill,
+    paddingVertical: spacing.md + 2,
   },
 });

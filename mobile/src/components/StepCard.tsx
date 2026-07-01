@@ -1,10 +1,9 @@
 import React from 'react';
 import { StyleSheet, Text, View } from 'react-native';
-import { colors } from '../theme/colors';
-import { radius, spacing } from '../theme/spacing';
-import { typography } from '../theme/typography';
-import type { Step } from '../services/types';
 import { GlassCard } from './GlassCard';
+import { Icon } from './Icon';
+import { colors, radius, spacing, typography } from '../theme';
+import type { Step } from '../services/types';
 
 interface Props {
   step: Step;
@@ -13,25 +12,30 @@ interface Props {
 
 export function StepCard({ step, totalSteps }: Props) {
   return (
-    <GlassCard>
-      <Text style={typography.label}>
-        STEP {step.step_number} OF {totalSteps}
-      </Text>
-      <Text style={[typography.title, styles.title]}>{step.title}</Text>
+    <GlassCard tone="raised">
+      <View style={styles.headerRow}>
+        <View style={styles.numberBadge}>
+          <Text style={styles.numberText}>{step.step_number}</Text>
+        </View>
+        <Text style={typography.overline}>Step {step.step_number} of {totalSteps}</Text>
+      </View>
+
+      <Text style={[typography.title2, styles.title]}>{step.title}</Text>
       <Text style={[typography.body, styles.instruction]}>{step.instruction}</Text>
 
-      <View style={styles.whyBlock}>
-        <Text style={typography.label}>WHY</Text>
-        <Text style={[typography.body, styles.why]}>{step.why}</Text>
+      <View style={styles.whyRow}>
+        <Icon name="bulb" size={15} color={colors.accentAlt} />
+        <Text style={[typography.callout, styles.why]}>{step.why}</Text>
       </View>
 
       {step.tools.length > 0 && (
         <View style={styles.section}>
-          <Text style={typography.label}>TOOLS NEEDED</Text>
+          <Text style={typography.overline}>Tools</Text>
           <View style={styles.chipRow}>
             {step.tools.map((tool) => (
               <View key={tool} style={styles.toolChip}>
-                <Text style={styles.toolChipText}>{tool}</Text>
+                <Icon name="wrench" size={12} color={colors.textSecondary} />
+                <Text style={styles.toolText}>{tool}</Text>
               </View>
             ))}
           </View>
@@ -39,19 +43,21 @@ export function StepCard({ step, totalSteps }: Props) {
       )}
 
       {step.stop_if.length > 0 && (
-        <View style={[styles.section, styles.stopBlock]}>
-          <Text style={[typography.label, styles.stopLabel]}>STOP IF</Text>
-          {step.stop_if.map((condition, idx) => (
-            <Text key={idx} style={[typography.body, styles.stopText]}>
-              • {condition}
-            </Text>
+        <View style={styles.stopBlock}>
+          <View style={styles.stopHeader}>
+            <Icon name="stop" size={15} color={colors.danger} />
+            <Text style={[typography.overline, styles.stopLabel]}>Stop if</Text>
+          </View>
+          {step.stop_if.map((c, i) => (
+            <Text key={i} style={[typography.callout, styles.stopText]}>{c}</Text>
           ))}
         </View>
       )}
 
       {step.citation_ids.length > 0 && (
         <View style={styles.citationRow}>
-          <Text style={typography.caption}>Cited: {step.citation_ids.join(', ')}</Text>
+          <Icon name="source" size={13} color={colors.textFaint} />
+          <Text style={typography.mono} numberOfLines={1}>{step.citation_ids.join('  ·  ')}</Text>
         </View>
       )}
     </GlassCard>
@@ -59,56 +65,97 @@ export function StepCard({ step, totalSteps }: Props) {
 }
 
 const styles = StyleSheet.create({
+  headerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+  },
+  numberBadge: {
+    width: 28,
+    height: 28,
+    borderRadius: radius.sm,
+    backgroundColor: colors.accent + '26',
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: colors.accent + '59',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  numberText: {
+    color: colors.accentAlt,
+    fontWeight: '800',
+    fontSize: 14,
+  },
   title: {
-    marginTop: spacing.xs,
+    marginTop: spacing.md,
   },
   instruction: {
     marginTop: spacing.md,
   },
-  whyBlock: {
+  whyRow: {
+    flexDirection: 'row',
+    gap: spacing.sm,
     marginTop: spacing.lg,
+    backgroundColor: colors.surfaceHigh,
+    borderRadius: radius.md,
+    padding: spacing.md,
   },
   why: {
-    marginTop: spacing.xs,
+    flex: 1,
+    color: colors.textSecondary,
   },
   section: {
     marginTop: spacing.lg,
+    gap: spacing.sm,
   },
   chipRow: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: spacing.sm,
-    marginTop: spacing.xs,
   },
   toolChip: {
-    backgroundColor: colors.surfaceElevated,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+    backgroundColor: colors.surfaceHigh,
     borderRadius: radius.pill,
-    paddingHorizontal: spacing.sm + 2,
+    paddingHorizontal: spacing.md,
     paddingVertical: 6,
-    borderWidth: 1,
+    borderWidth: StyleSheet.hairlineWidth,
     borderColor: colors.surfaceBorder,
   },
-  toolChipText: {
+  toolText: {
     color: colors.textSecondary,
-    fontSize: 12,
+    fontSize: 12.5,
     fontWeight: '600',
   },
   stopBlock: {
-    backgroundColor: colors.red + '14',
+    marginTop: spacing.lg,
+    backgroundColor: 'rgba(251,92,99,0.1)',
     borderRadius: radius.md,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: 'rgba(251,92,99,0.28)',
     padding: spacing.md,
+    gap: spacing.xs,
+  },
+  stopHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    marginBottom: spacing.xs,
   },
   stopLabel: {
-    color: colors.red,
+    color: colors.danger,
   },
   stopText: {
     color: colors.textPrimary,
-    marginTop: spacing.xs,
   },
   citationRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
     marginTop: spacing.lg,
-    borderTopWidth: 1,
+    paddingTop: spacing.md,
+    borderTopWidth: StyleSheet.hairlineWidth,
     borderTopColor: colors.divider,
-    paddingTop: spacing.sm,
   },
 });

@@ -3,12 +3,14 @@ import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { RootStackParamList } from '../navigation/RootNavigator';
-import { GradientBackground } from '../components/GradientBackground';
+import { Screen } from '../components/Screen';
+import { AppHeader } from '../components/AppHeader';
 import { StepCard } from '../components/StepCard';
+import { ProgressBar } from '../components/ProgressBar';
+import { StepDots } from '../components/StepDots';
 import { PrimaryButton } from '../components/PrimaryButton';
 import { EmptyState } from '../components/EmptyState';
-import { spacing } from '../theme/spacing';
-import { typography } from '../theme/typography';
+import { spacing, typography } from '../theme';
 import { useRepairSessionStore } from '../state/repairSessionStore';
 import * as api from '../services/apiClient';
 import type { FeedbackResult } from '../services/types';
@@ -25,38 +27,35 @@ export function GuidedRepairScreen() {
 
   if (!diagnoseResult || diagnoseResult.steps.length === 0) {
     return (
-      <GradientBackground>
-        <View style={styles.centered}>
+      <Screen>
+        <View style={styles.center}>
           <EmptyState
-            title="No guided steps available"
+            icon="wrench"
+            title="No guided steps"
             message="There isn't a guided repair sequence for this diagnosis."
             actionLabel="Back to diagnosis"
             onAction={() => navigation.navigate('Diagnosis')}
           />
         </View>
-      </GradientBackground>
+      </Screen>
     );
   }
 
   const steps = diagnoseResult.steps;
   const step = steps[currentStepIndex];
-  const isLastStep = currentStepIndex === steps.length - 1;
+  const isLast = currentStepIndex === steps.length - 1;
+  const progress = (currentStepIndex + 1) / steps.length;
 
   const recordFeedback = async (result: FeedbackResult) => {
     setSubmitting(true);
     try {
       await api.submitFeedback({ session_id: diagnoseResult.session_id, step_number: step.step_number, result });
     } catch {
-      // Feedback is best-effort; don't block the guided flow if it fails.
+      // best-effort
     } finally {
       setSubmitting(false);
     }
-
-    if (result === 'stop') {
-      navigation.navigate('Diagnosis');
-      return;
-    }
-    if (isLastStep) {
+    if (result === 'stop' || isLast) {
       navigation.navigate('Diagnosis');
       return;
     }
@@ -64,83 +63,47 @@ export function GuidedRepairScreen() {
   };
 
   return (
-    <GradientBackground>
-      <View style={styles.header}>
-        <Text style={typography.title}>Guided fix</Text>
-        {currentStepIndex > 0 && (
-          <PrimaryButton label="Back" variant="secondary" onPress={goToPreviousStep} style={styles.backButton} />
-        )}
+    <Screen edges={['top']}>
+      <View style={styles.headerPad}>
+        <AppHeader
+          title="Guided fix"
+          rightAction={currentStepIndex > 0 ? { icon: 'back', onPress: goToPreviousStep, accessibilityLabel: 'Previous step' } : undefined}
+        />
+        <View style={styles.progressRow}>
+          <ProgressBar progress={progress} />
+          <Text style={[typography.caption, styles.progressLabel]}>{currentStepIndex + 1}/{steps.length}</Text>
+        </View>
+        <View style={styles.dotsRow}>
+          <StepDots total={steps.length} current={currentStepIndex} />
+        </View>
       </View>
 
-      <ScrollView contentContainerStyle={styles.scrollContent}>
+      <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
         <StepCard step={step} totalSteps={steps.length} />
       </ScrollView>
 
       <View style={styles.footer}>
         <View style={styles.footerRow}>
-          <PrimaryButton
-            label="Didn't work"
-            variant="secondary"
-            onPress={() => recordFeedback('didnt_work')}
-            disabled={submitting}
-            style={styles.footerButton}
-          />
-          <PrimaryButton
-            label="Skip"
-            variant="secondary"
-            onPress={() => recordFeedback('skip')}
-            disabled={submitting}
-            style={styles.footerButton}
-          />
+          <PrimaryButton label="Didn't work" icon="close" variant="ghost" onPress={() => recordFeedback('didnt_work')} disabled={submitting} style={styles.btn} />
+          <PrimaryButton label="Skip" icon="skip" variant="ghost" onPress={() => recordFeedback('skip')} disabled={submitting} style={styles.btn} />
         </View>
         <View style={styles.footerRow}>
-          <PrimaryButton
-            label="Stop"
-            variant="danger"
-            onPress={() => recordFeedback('stop')}
-            disabled={submitting}
-            style={styles.footerButton}
-          />
-          <PrimaryButton
-            label={isLastStep ? 'Done - finish' : 'Done - next step'}
-            onPress={() => recordFeedback('done')}
-            disabled={submitting}
-            style={styles.footerButton}
-          />
+          <PrimaryButton label="Stop" icon="stop" variant="danger" onPress={() => recordFeedback('stop')} disabled={submitting} style={styles.btn} />
+          <PrimaryButton label={isLast ? 'Finish' : 'Done'} icon="check" onPress={() => recordFeedback('done')} disabled={submitting} style={styles.btn} />
         </View>
       </View>
-    </GradientBackground>
+    </Screen>
   );
 }
 
 const styles = StyleSheet.create({
-  centered: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: spacing.lg,
-    paddingTop: spacing.xxl,
-  },
-  backButton: {
-    minWidth: 90,
-  },
-  scrollContent: {
-    padding: spacing.lg,
-  },
-  footer: {
-    padding: spacing.lg,
-    gap: spacing.sm,
-  },
-  footerRow: {
-    flexDirection: 'row',
-    gap: spacing.sm,
-  },
-  footerButton: {
-    flex: 1,
-  },
+  center: { flex: 1, alignItems: 'center', justifyContent: 'center' },
+  headerPad: { paddingHorizontal: spacing.xl },
+  progressRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.md, marginTop: spacing.md },
+  progressLabel: { width: 34, textAlign: 'right' },
+  dotsRow: { marginTop: spacing.md },
+  scroll: { paddingHorizontal: spacing.xl, paddingTop: spacing.lg, paddingBottom: spacing.xl },
+  footer: { paddingHorizontal: spacing.xl, paddingTop: spacing.sm, paddingBottom: spacing.lg, gap: spacing.md },
+  footerRow: { flexDirection: 'row', gap: spacing.md },
+  btn: { flex: 1 },
 });

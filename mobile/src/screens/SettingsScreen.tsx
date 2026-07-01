@@ -1,11 +1,12 @@
 import React, { useEffect, useState } from 'react';
-import { Alert, ScrollView, StyleSheet, Switch, Text, TextInput, View } from 'react-native';
-import { GradientBackground } from '../components/GradientBackground';
+import { Alert, StyleSheet, Switch, Text, TextInput, View } from 'react-native';
+import { Screen } from '../components/Screen';
+import { AppHeader } from '../components/AppHeader';
 import { GlassCard } from '../components/GlassCard';
+import { ListGroup, ListRow } from '../components/ListRow';
 import { PrimaryButton } from '../components/PrimaryButton';
-import { colors } from '../theme/colors';
-import { radius, spacing } from '../theme/spacing';
-import { typography } from '../theme/typography';
+import { Icon } from '../components/Icon';
+import { colors, radius, spacing, typography } from '../theme';
 import { API_BASE_URL } from '../services/config';
 import * as api from '../services/apiClient';
 import { ApiError } from '../services/apiClient';
@@ -20,51 +21,44 @@ import {
 } from '../services/storage';
 import { useRepairSessionStore } from '../state/repairSessionStore';
 
+type ConnStatus = 'unknown' | 'checking' | 'connected' | 'error';
+
 export function SettingsScreen() {
   const [apiUrl, setApiUrl] = useState('');
   const [privacyMode, setPrivacyModeState] = useState(false);
   const [demoMode, setDemoModeState] = useState(false);
-  const [status, setStatus] = useState<'unknown' | 'connected' | 'error'>('unknown');
-  const [statusMessage, setStatusMessage] = useState('Not checked yet');
+  const [status, setStatus] = useState<ConnStatus>('unknown');
+  const [statusMsg, setStatusMsg] = useState('Not checked yet');
   const reset = useRepairSessionStore((s) => s.reset);
 
   useEffect(() => {
     (async () => {
-      const override = await getApiBaseUrlOverride();
-      setApiUrl(override ?? API_BASE_URL);
+      setApiUrl((await getApiBaseUrlOverride()) ?? API_BASE_URL);
       setPrivacyModeState(await getPrivacyMode());
       setDemoModeState(await getDemoMode());
     })();
   }, []);
 
-  const handleSaveUrl = async () => {
-    await setApiBaseUrlOverride(apiUrl.trim() === API_BASE_URL ? null : apiUrl.trim());
-    Alert.alert('Saved', 'Backend URL updated.');
-  };
-
-  const handleTestConnection = async () => {
+  const testConnection = async () => {
+    setStatus('checking');
+    setStatusMsg('Connecting…');
     try {
-      const health = await api.getHealth();
+      const h = await api.getHealth();
       setStatus('connected');
-      setStatusMessage(`Connected · v${health.version}`);
+      setStatusMsg(`Connected · backend v${h.version}`);
     } catch (err) {
       setStatus('error');
-      setStatusMessage(err instanceof ApiError ? err.message : 'Could not reach backend.');
+      setStatusMsg(err instanceof ApiError ? err.message : 'Could not reach backend.');
     }
   };
 
-  const handleTogglePrivacy = async (value: boolean) => {
-    setPrivacyModeState(value);
-    await setPrivacyMode(value);
+  const saveUrl = async () => {
+    await setApiBaseUrlOverride(apiUrl.trim() === API_BASE_URL ? null : apiUrl.trim());
+    testConnection();
   };
 
-  const handleToggleDemo = async (value: boolean) => {
-    setDemoModeState(value);
-    await setDemoMode(value);
-  };
-
-  const handleDeleteHistory = () => {
-    Alert.alert('Delete local history?', 'This clears locally saved settings and the current session on this device.', [
+  const deleteHistory = () => {
+    Alert.alert('Delete local data?', 'Clears locally saved settings and the current session on this device.', [
       { text: 'Cancel', style: 'cancel' },
       {
         text: 'Delete',
@@ -78,136 +72,94 @@ export function SettingsScreen() {
     ]);
   };
 
+  const statusColor = status === 'connected' ? colors.success : status === 'error' ? colors.danger : colors.textTertiary;
+  const statusIcon = status === 'connected' ? 'cloudDone' : status === 'error' ? 'cloudOff' : 'cloud';
+
   return (
-    <GradientBackground>
-      <ScrollView contentContainerStyle={styles.scrollContent}>
-        <Text style={typography.title}>Settings</Text>
+    <Screen scroll contentStyle={styles.scroll}>
+      <AppHeader title="Settings" subtitle="Backend, privacy, and data" large />
 
-        <GlassCard style={styles.card}>
-          <Text style={typography.label}>BACKEND API URL</Text>
-          <TextInput
-            value={apiUrl}
-            onChangeText={setApiUrl}
-            placeholder={API_BASE_URL}
-            placeholderTextColor={colors.textTertiary}
-            autoCapitalize="none"
-            autoCorrect={false}
-            style={styles.input}
-          />
-          <View style={styles.buttonRow}>
-            <PrimaryButton label="Save" variant="secondary" onPress={handleSaveUrl} style={styles.buttonHalf} />
-            <PrimaryButton label="Test connection" onPress={handleTestConnection} style={styles.buttonHalf} />
-          </View>
-          <Text
-            style={[
-              styles.statusText,
-              status === 'connected' && styles.statusOk,
-              status === 'error' && styles.statusError,
-            ]}
-          >
-            {statusMessage}
+      <GlassCard style={styles.card}>
+        <View style={styles.cardHeader}>
+          <Icon name="cloud" size={16} color={colors.accentAlt} />
+          <Text style={typography.overline}>Backend connection</Text>
+        </View>
+        <TextInput
+          value={apiUrl}
+          onChangeText={setApiUrl}
+          placeholder={API_BASE_URL}
+          placeholderTextColor={colors.textFaint}
+          autoCapitalize="none"
+          autoCorrect={false}
+          keyboardType="url"
+          style={styles.input}
+        />
+        <View style={styles.buttonRow}>
+          <PrimaryButton label="Save" variant="ghost" onPress={saveUrl} style={styles.halfBtn} />
+          <PrimaryButton label="Test" icon="cloud" onPress={testConnection} loading={status === 'checking'} style={styles.halfBtn} />
+        </View>
+        <View style={styles.statusRow}>
+          <Icon name={statusIcon} size={15} color={statusColor} />
+          <Text style={[typography.caption, { color: statusColor }]}>{statusMsg}</Text>
+        </View>
+        <View style={styles.lanTip}>
+          <Icon name="info" size={14} color={colors.textFaint} />
+          <Text style={[typography.caption, styles.lanTipText]}>
+            On a physical iPhone, use your Mac{"'"}s LAN address (e.g. http://192.168.1.12:8000) and run{' '}
+            <Text style={styles.lanCode}>make backend-lan</Text> so the phone can reach the API.
           </Text>
-        </GlassCard>
+        </View>
+      </GlassCard>
 
-        <GlassCard style={styles.card}>
-          <View style={styles.switchRow}>
-            <View style={styles.switchLabel}>
-              <Text style={typography.bodyStrong}>Privacy mode</Text>
-              <Text style={typography.caption}>Avoid sending free-text descriptions where possible</Text>
-            </View>
-            <Switch value={privacyMode} onValueChange={handleTogglePrivacy} trackColor={{ true: colors.cyan }} />
-          </View>
-          <View style={styles.divider} />
-          <View style={styles.switchRow}>
-            <View style={styles.switchLabel}>
-              <Text style={typography.bodyStrong}>Demo mode</Text>
-              <Text style={typography.caption}>Prefer the seeded demo scenarios during walkthroughs</Text>
-            </View>
-            <Switch value={demoMode} onValueChange={handleToggleDemo} trackColor={{ true: colors.cyan }} />
-          </View>
-        </GlassCard>
+      <ListGroup title="Preferences">
+        <ListRow
+          icon="lock"
+          title="Privacy mode"
+          subtitle="Avoid sending free-text where possible"
+          right={<Switch value={privacyMode} onValueChange={(v) => { setPrivacyModeState(v); setPrivacyMode(v); }} trackColor={{ true: colors.accent }} thumbColor={colors.textPrimary} />}
+        />
+        <ListRow
+          icon="sparkles"
+          title="Demo mode"
+          subtitle="Prefer the seeded demo scenarios"
+          right={<Switch value={demoMode} onValueChange={(v) => { setDemoModeState(v); setDemoMode(v); }} trackColor={{ true: colors.accent }} thumbColor={colors.textPrimary} />}
+        />
+      </ListGroup>
 
-        <GlassCard style={styles.card}>
-          <Text style={typography.bodyStrong}>Delete local history</Text>
-          <Text style={[typography.body, styles.deleteCaption]}>
-            Removes locally saved settings and the in-progress session from this device.
-          </Text>
-          <PrimaryButton label="Delete local data" variant="danger" onPress={handleDeleteHistory} style={styles.deleteButton} />
-        </GlassCard>
+      <ListGroup title="Data">
+        <ListRow icon="trash" iconColor={colors.danger} title="Delete local data" subtitle="Clears settings & current session on this device" danger onPress={deleteHistory} />
+      </ListGroup>
 
-        <Text style={styles.privacyNote}>
-          FixIt Lens sends photos and text you provide to your configured backend for analysis. No API keys are
-          ever stored on this device.
+      <View style={styles.footer}>
+        <Icon name="shield" size={14} color={colors.textFaint} />
+        <Text style={[typography.caption, styles.footerText]}>
+          FixIt Lens sends photos and text you provide to your configured backend. No API keys are ever stored on this device.
         </Text>
-      </ScrollView>
-    </GradientBackground>
+      </View>
+    </Screen>
   );
 }
 
 const styles = StyleSheet.create({
-  scrollContent: {
-    padding: spacing.lg,
-    paddingTop: spacing.xxl,
-    paddingBottom: spacing.xxl,
-  },
-  card: {
-    marginTop: spacing.lg,
-  },
+  scroll: { paddingTop: spacing.sm },
+  card: { marginTop: spacing.xl },
+  cardHeader: { flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: spacing.md },
   input: {
-    marginTop: spacing.sm,
-    backgroundColor: colors.surfaceElevated,
+    backgroundColor: colors.surfaceHigh,
     borderRadius: radius.md,
-    borderWidth: 1,
+    borderWidth: StyleSheet.hairlineWidth,
     borderColor: colors.surfaceBorder,
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm + 2,
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.md + 2,
     color: colors.textPrimary,
     fontSize: 14,
   },
-  buttonRow: {
-    flexDirection: 'row',
-    gap: spacing.sm,
-    marginTop: spacing.md,
-  },
-  buttonHalf: {
-    flex: 1,
-  },
-  statusText: {
-    marginTop: spacing.sm,
-    color: colors.textTertiary,
-    fontSize: 12,
-  },
-  statusOk: {
-    color: colors.green,
-  },
-  statusError: {
-    color: colors.red,
-  },
-  switchRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
-  switchLabel: {
-    flex: 1,
-    paddingRight: spacing.md,
-  },
-  divider: {
-    height: 1,
-    backgroundColor: colors.divider,
-    marginVertical: spacing.md,
-  },
-  deleteCaption: {
-    marginTop: spacing.xs,
-  },
-  deleteButton: {
-    marginTop: spacing.md,
-  },
-  privacyNote: {
-    marginTop: spacing.xl,
-    color: colors.textTertiary,
-    fontSize: 12,
-    textAlign: 'center',
-    lineHeight: 18,
-  },
+  buttonRow: { flexDirection: 'row', gap: spacing.md, marginTop: spacing.md },
+  halfBtn: { flex: 1 },
+  statusRow: { flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: spacing.md },
+  lanTip: { flexDirection: 'row', gap: spacing.sm, marginTop: spacing.md, paddingTop: spacing.md, borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: colors.divider },
+  lanTipText: { flex: 1, lineHeight: 18, color: colors.textTertiary },
+  lanCode: { fontFamily: 'Menlo', color: colors.accentAlt },
+  footer: { flexDirection: 'row', gap: spacing.sm, marginTop: spacing.xxl, paddingHorizontal: spacing.xs },
+  footerText: { flex: 1, lineHeight: 18 },
 });

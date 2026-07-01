@@ -1,83 +1,129 @@
 import React from 'react';
-import { ActivityIndicator, Pressable, StyleProp, StyleSheet, Text, ViewStyle } from 'react-native';
+import { ActivityIndicator, StyleProp, StyleSheet, Text, View, ViewStyle } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import * as Haptics from 'expo-haptics';
-import { colors, gradients } from '../theme/colors';
-import { radius, spacing } from '../theme/spacing';
-import { typography } from '../theme/typography';
+import { AnimatedPressable } from './AnimatedPressable';
+import { Icon, IconName } from './Icon';
+import { colors, gradients, radius, shadows, spacing, typography } from '../theme';
 
 interface Props {
   label: string;
   onPress: () => void;
   disabled?: boolean;
   loading?: boolean;
-  variant?: 'primary' | 'secondary' | 'danger';
+  variant?: 'primary' | 'secondary' | 'ghost' | 'danger';
+  icon?: IconName;
   style?: StyleProp<ViewStyle>;
+  fullWidth?: boolean;
 }
 
-export function PrimaryButton({ label, onPress, disabled, loading, variant = 'primary', style }: Props) {
-  const handlePress = () => {
-    if (disabled || loading) return;
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
-    onPress();
-  };
+export function PrimaryButton({
+  label,
+  onPress,
+  disabled,
+  loading,
+  variant = 'primary',
+  icon,
+  style,
+  fullWidth,
+}: Props) {
+  const isBusy = disabled || loading;
 
-  if (variant === 'secondary') {
+  const content = (labelColor: string) => (
+    <View style={styles.inner}>
+      {loading ? (
+        <ActivityIndicator color={labelColor} />
+      ) : (
+        <>
+          {icon && <Icon name={icon} size={18} color={labelColor} />}
+          <Text style={[typography.button, { color: labelColor }]}>{label}</Text>
+        </>
+      )}
+    </View>
+  );
+
+  if (variant === 'primary') {
     return (
-      <Pressable
-        onPress={handlePress}
-        disabled={disabled || loading}
-        style={[styles.secondary, (disabled || loading) && styles.disabled, style]}
+      <AnimatedPressable
+        onPress={onPress}
+        disabled={isBusy}
+        haptic="medium"
+        accessibilityLabel={label}
+        style={[fullWidth && styles.fullWidth, isBusy && styles.disabled, style]}
       >
-        {loading ? (
-          <ActivityIndicator color={colors.textPrimary} />
-        ) : (
-          <Text style={[typography.bodyStrong, styles.secondaryLabel]}>{label}</Text>
-        )}
-      </Pressable>
+        <LinearGradient
+          colors={gradients.accent}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={[styles.base, shadows.accentGlow]}
+        >
+          {content('#0A0B0F')}
+        </LinearGradient>
+      </AnimatedPressable>
     );
   }
 
-  const gradientColors = variant === 'danger' ? gradients.danger : gradients.cyanViolet;
+  if (variant === 'danger') {
+    return (
+      <AnimatedPressable
+        onPress={onPress}
+        disabled={isBusy}
+        haptic="medium"
+        accessibilityLabel={label}
+        style={[fullWidth && styles.fullWidth, isBusy && styles.disabled, style]}
+      >
+        <View style={[styles.base, styles.dangerBase]}>{content(colors.danger)}</View>
+      </AnimatedPressable>
+    );
+  }
 
+  const isGhost = variant === 'ghost';
   return (
-    <Pressable onPress={handlePress} disabled={disabled || loading} style={[(disabled || loading) && styles.disabled, style]}>
-      <LinearGradient colors={gradientColors} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={styles.primary}>
-        {loading ? (
-          <ActivityIndicator color={variant === 'danger' ? colors.textPrimary : colors.background} />
-        ) : (
-          <Text style={[typography.button, variant === 'danger' && styles.dangerLabel]}>{label}</Text>
-        )}
-      </LinearGradient>
-    </Pressable>
+    <AnimatedPressable
+      onPress={onPress}
+      disabled={isBusy}
+      haptic="light"
+      accessibilityLabel={label}
+      style={[fullWidth && styles.fullWidth, isBusy && styles.disabled, style]}
+    >
+      <View style={[styles.base, isGhost ? styles.ghostBase : styles.secondaryBase]}>
+        {content(colors.textPrimary)}
+      </View>
+    </AnimatedPressable>
   );
 }
 
 const styles = StyleSheet.create({
-  primary: {
+  base: {
     borderRadius: radius.pill,
-    paddingVertical: spacing.md,
+    minHeight: 54,
     alignItems: 'center',
     justifyContent: 'center',
-    minHeight: 52,
+    paddingHorizontal: spacing.xl,
   },
-  dangerLabel: {
-    color: colors.textPrimary,
-  },
-  secondary: {
-    borderRadius: radius.pill,
-    paddingVertical: spacing.md,
+  inner: {
+    flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
-    minHeight: 52,
-    borderWidth: 1,
+    gap: spacing.sm,
+  },
+  secondaryBase: {
+    backgroundColor: colors.surfaceRaised,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: colors.surfaceBorderStrong,
+  },
+  ghostBase: {
+    backgroundColor: 'transparent',
+    borderWidth: StyleSheet.hairlineWidth,
     borderColor: colors.surfaceBorder,
-    backgroundColor: colors.surface,
   },
-  secondaryLabel: {
-    color: colors.textPrimary,
+  dangerBase: {
+    backgroundColor: 'rgba(251,92,99,0.12)',
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: 'rgba(251,92,99,0.4)',
+  },
+  fullWidth: {
+    width: '100%',
   },
   disabled: {
-    opacity: 0.5,
+    opacity: 0.45,
   },
 });

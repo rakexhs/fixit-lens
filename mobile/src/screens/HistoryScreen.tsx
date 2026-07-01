@@ -1,16 +1,18 @@
 import React, { useCallback, useState } from 'react';
-import { FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
+import { FlatList, RefreshControl, StyleSheet, Text, View } from 'react-native';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { RootStackParamList } from '../navigation/RootNavigator';
-import { GradientBackground } from '../components/GradientBackground';
+import { Screen } from '../components/Screen';
+import { AppHeader } from '../components/AppHeader';
 import { GlassCard } from '../components/GlassCard';
 import { SafetyBadge } from '../components/SafetyBadge';
 import { EmptyState } from '../components/EmptyState';
 import { ErrorState } from '../components/ErrorState';
-import { spacing } from '../theme/spacing';
-import { typography } from '../theme/typography';
-import { colors } from '../theme/colors';
+import { AnimatedPressable } from '../components/AnimatedPressable';
+import { SkeletonCard } from '../components/Skeleton';
+import { Icon, IconName } from '../components/Icon';
+import { colors, spacing, typography } from '../theme';
 import { formatDate, titleCase } from '../utils/formatters';
 import { useRepairSessionStore } from '../state/repairSessionStore';
 import * as api from '../services/apiClient';
@@ -18,6 +20,14 @@ import { ApiError } from '../services/apiClient';
 import type { SessionSummary } from '../services/types';
 
 type Nav = NativeStackNavigationProp<RootStackParamList, 'History'>;
+
+const CATEGORY_ICON: Record<string, IconName> = {
+  router: 'router',
+  laptop: 'laptop',
+  dishwasher: 'appliance',
+  washing_machine: 'appliance',
+  dangerous: 'danger',
+};
 
 export function HistoryScreen() {
   const navigation = useNavigation<Nav>();
@@ -30,8 +40,7 @@ export function HistoryScreen() {
     setLoading(true);
     setError(null);
     try {
-      const result = await api.listSessions();
-      setSessions(result);
+      setSessions(await api.listSessions());
     } catch (err) {
       setError(err instanceof ApiError ? err.message : 'Could not load history.');
     } finally {
@@ -39,42 +48,44 @@ export function HistoryScreen() {
     }
   }, []);
 
-  useFocusEffect(
-    useCallback(() => {
-      load();
-    }, [load])
-  );
+  useFocusEffect(useCallback(() => { load(); }, [load]));
 
   const openSession = async (sessionId: string) => {
     try {
-      const detail = await api.getSession(sessionId);
+      const d = await api.getSession(sessionId);
       setDiagnoseResult({
-        session_id: detail.session_id,
-        diagnosis: detail.diagnosis ?? { likely_issue: detail.likely_issue ?? 'Unknown issue', confidence: 0, reasoning_summary: '' },
-        safety: detail.safety ?? { risk_level: (detail.risk_level as 0 | 1 | 2 | 3) ?? 0, label: '', warnings: [], blocked: detail.blocked, professional_required: detail.blocked },
-        steps: detail.steps,
+        session_id: d.session_id,
+        diagnosis: d.diagnosis ?? { likely_issue: d.likely_issue ?? 'Unknown issue', confidence: 0, reasoning_summary: '' },
+        safety: d.safety ?? { risk_level: (d.risk_level as 0 | 1 | 2 | 3) ?? 0, label: '', warnings: [], blocked: d.blocked, professional_required: d.blocked },
+        steps: d.steps,
         clarifying_question: null,
-        sources: detail.sources,
-        metrics: { retrieval_latency_ms: 0, generation_latency_ms: 0, total_latency_ms: 0, citation_coverage: 1, provider_used: detail.provider_used ?? 'unknown' },
+        sources: d.sources,
+        metrics: { retrieval_latency_ms: 0, generation_latency_ms: 0, total_latency_ms: 0, citation_coverage: 1, provider_used: d.provider_used ?? 'unknown' },
       });
       navigation.navigate('Diagnosis');
     } catch {
-      // best-effort; ignore failures opening a past session
+      // best-effort
     }
   };
 
   return (
-    <GradientBackground>
-      <View style={styles.header}>
-        <Text style={typography.title}>History</Text>
-        <Text style={[typography.body, styles.subtitle]}>Your past repair sessions</Text>
+    <Screen edges={['top', 'bottom']}>
+      <View style={styles.headerPad}>
+        <AppHeader title="History" subtitle="Your past repair sessions" large />
       </View>
 
       {error ? (
-        <ErrorState message={error} onRetry={load} />
+        <View style={styles.center}><ErrorState message={error} onRetry={load} /></View>
+      ) : loading && sessions.length === 0 ? (
+        <View style={styles.skeletonList}>
+          <SkeletonCard />
+          <SkeletonCard lines={2} style={styles.skeletonGap} />
+          <SkeletonCard lines={2} style={styles.skeletonGap} />
+        </View>
       ) : !loading && sessions.length === 0 ? (
-        <View style={styles.centered}>
+        <View style={styles.center}>
           <EmptyState
+            icon="history"
             title="No sessions yet"
             message="Scan a device or type in details to start your first session."
             actionLabel="Start scanning"
@@ -85,61 +96,55 @@ export function HistoryScreen() {
         <FlatList
           data={sessions}
           keyExtractor={(item) => item.session_id}
-          onRefresh={load}
-          refreshing={loading}
-          contentContainerStyle={styles.listContent}
-          renderItem={({ item }) => (
-            <Pressable onPress={() => openSession(item.session_id)}>
-              <GlassCard style={styles.card}>
-                <View style={styles.cardHeader}>
-                  <Text style={typography.bodyStrong}>
-                    {item.brand ? `${item.brand} ${item.model ?? ''}`.trim() : titleCase(item.device_category ?? 'Unknown device')}
+          refreshControl={<RefreshControl refreshing={loading} onRefresh={load} tintColor={colors.accentAlt} />}
+          contentContainerStyle={styles.list}
+          showsVerticalScrollIndicator={false}
+          renderItem={({ item }) => {
+            const cat = item.device_category ?? 'unknown';
+            return (
+              <AnimatedPressable haptic="light" scaleTo={0.98} onPress={() => openSession(item.session_id)} style={styles.cardWrap}>
+                <GlassCard>
+                  <View style={styles.cardHeader}>
+                    <View style={styles.iconWrap}>
+                      <Icon name={CATEGORY_ICON[cat] ?? 'appliance'} size={18} color={colors.accentAlt} />
+                    </View>
+                    <View style={styles.cardTitle}>
+                      <Text style={typography.bodyStrong} numberOfLines={1}>
+                        {item.brand ? `${item.brand} ${item.model ?? ''}`.trim() : titleCase(cat)}
+                      </Text>
+                      <Text style={typography.caption}>{formatDate(item.created_at)}</Text>
+                    </View>
+                    <SafetyBadge riskLevel={item.risk_level ?? 0} blocked={item.blocked} compact />
+                  </View>
+                  <Text style={[typography.callout, styles.issue]} numberOfLines={2}>
+                    {item.likely_issue ?? 'No diagnosis recorded'}
                   </Text>
-                  <SafetyBadge riskLevel={item.risk_level ?? 0} blocked={item.blocked} />
-                </View>
-                <Text style={[typography.body, styles.issue]}>{item.likely_issue ?? 'No diagnosis recorded'}</Text>
-                <Text style={styles.date}>{formatDate(item.created_at)}</Text>
-              </GlassCard>
-            </Pressable>
-          )}
+                </GlassCard>
+              </AnimatedPressable>
+            );
+          }}
         />
       )}
-    </GradientBackground>
+    </Screen>
   );
 }
 
 const styles = StyleSheet.create({
-  header: {
-    paddingHorizontal: spacing.lg,
-    paddingTop: spacing.xxl,
-    paddingBottom: spacing.md,
-  },
-  subtitle: {
-    marginTop: spacing.xs,
-  },
-  centered: {
-    flex: 1,
+  headerPad: { paddingHorizontal: spacing.xl },
+  center: { flex: 1, alignItems: 'center', justifyContent: 'center' },
+  skeletonList: { paddingHorizontal: spacing.xl, paddingTop: spacing.lg },
+  skeletonGap: { marginTop: spacing.md },
+  list: { paddingHorizontal: spacing.xl, paddingTop: spacing.lg, paddingBottom: spacing.xxxl },
+  cardWrap: { marginBottom: spacing.md },
+  cardHeader: { flexDirection: 'row', alignItems: 'center', gap: spacing.md },
+  iconWrap: {
+    width: 40,
+    height: 40,
+    borderRadius: 12,
+    backgroundColor: colors.accentAlt + '14',
     alignItems: 'center',
     justifyContent: 'center',
   },
-  listContent: {
-    padding: spacing.lg,
-  },
-  card: {
-    marginBottom: spacing.md,
-  },
-  cardHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    gap: spacing.sm,
-  },
-  issue: {
-    marginTop: spacing.sm,
-  },
-  date: {
-    marginTop: spacing.sm,
-    color: colors.textTertiary,
-    fontSize: 12,
-  },
+  cardTitle: { flex: 1, gap: 2 },
+  issue: { marginTop: spacing.md },
 });

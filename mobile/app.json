@@ -7,10 +7,27 @@
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "dark",
     "backgroundColor": "#0B0C10",
+    "scheme": "fixitlens",
+    "splash": {
+      "image": "./assets/splash-icon.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#0B0C10"
+    },
     "ios": {
-      "supportsTablet": true
+      "bundleIdentifier": "com.fixitlens.app",
+      "buildNumber": "1",
+      "supportsTablet": true,
+      "infoPlist": {
+        "NSCameraUsageDescription": "FixIt Lens uses the camera to scan device labels, error codes, and warning lights so it can identify what might be wrong.",
+        "NSPhotoLibraryUsageDescription": "FixIt Lens needs access to your photos so you can select a picture of the device or error you want help with.",
+        "NSAppTransportSecurity": {
+          "NSAllowsLocalNetworking": true
+        },
+        "ITSAppUsesNonExemptEncryption": false
+      }
     },
     "android": {
+      "package": "com.fixitlens.app",
       "adaptiveIcon": {
         "backgroundColor": "#0B0C10",
         "foregroundImage": "./assets/android-icon-foreground.png",
@@ -35,7 +52,8 @@
         {
           "photosPermission": "FixIt Lens needs access to your photos so you can select a picture of the device or error you want help with."
         }
-      ]
+      ],
+      "expo-splash-screen"
     ]
   }
 }
