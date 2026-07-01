@@ -1,0 +1,309 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 56;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		187953FCC670212ABA5F244C /* Services/APIClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = B97F9B77DC83791706B79C41 /* Services/APIClient.swift */; };
+		1D88FDA3906A04870F3C1248 /* Views/SecondaryScreens.swift in Sources */ = {isa = PBXBuildFile; fileRef = 549926A6FBBDBA9DB0DBC7F0 /* Views/SecondaryScreens.swift */; };
+		224CC37FCA7FD2CC935EEA81 /* Views/OnboardingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6C3D05A44F592833AE6FFFC /* Views/OnboardingView.swift */; };
+		389E0B9CEE4668175B6BCE6B /* Views/GuidedRepairView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CA4E7E02B54ED14DBB117356 /* Views/GuidedRepairView.swift */; };
+		3E1127A64E0C8C427A7584AE /* Services/AppSettings.swift in Sources */ = {isa = PBXBuildFile; fileRef = 99949C997A303DF59CC5E804 /* Services/AppSettings.swift */; };
+		561EDE9E6FCDB4A4D0A24462 /* Theme/DesignSystem.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8B93E0D4032038027F9BCBE5 /* Theme/DesignSystem.swift */; };
+		5E2DF485A82DA700DA7CC874 /* Views/MainTabView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6D0B7485BC90F86D0B5A8315 /* Views/MainTabView.swift */; };
+		6B443BBA2C013E8FE0CEF7E6 /* Models/APIModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6B54133C9F64C70008D2E878 /* Models/APIModels.swift */; };
+		8302837D317348808C6A359C /* Services/ImageProcessing.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9032A32E6F460D59741EA020 /* Services/ImageProcessing.swift */; };
+		89CF84103F3F8BEDFC2156CC /* Views/DiagnosisHubView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC26970B862D25CE1C50D24D /* Views/DiagnosisHubView.swift */; };
+		8BABBB0134B7D0AD0AD68603 /* Views/ImagePreviewView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 56F4147E4CE0D762662E42A9 /* Views/ImagePreviewView.swift */; };
+		95DDB918007071E8CF59915C /* Views/CameraHomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2475754FF15185769ABACB9A /* Views/CameraHomeView.swift */; };
+		A0F8BD50901282D5E011D7FC /* App/FixItLensApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 360C890175D6B296B163D32D /* App/FixItLensApp.swift */; };
+		A751F3D55F4BC89DF4610021 /* ViewModels/SessionStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8BE4915AFB17B2EF45EA4C26 /* ViewModels/SessionStore.swift */; };
+		C2BEB0A13646DB198814C495 /* Resources/Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 75046E84DAE53AA83B440071 /* Resources/Assets.xcassets */; };
+		E696219A626FFD5FEBDA9BC2 /* Components/CameraComponents.swift in Sources */ = {isa = PBXBuildFile; fileRef = 41A53C72B703D9B38F268539 /* Components/CameraComponents.swift */; };
+		F9C6ED140542B3169A120E38 /* Views/AnalyzeProgressView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B357FFEF8DDDD9AA0E992BF1 /* Views/AnalyzeProgressView.swift */; };
+		FFD594B7AB8004137C19CACB /* Components/UIComponents.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3AEBE79B2E3D789A54791306 /* Components/UIComponents.swift */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXFileReference section */
+		2475754FF15185769ABACB9A /* Views/CameraHomeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Views/CameraHomeView.swift; sourceTree = "<group>"; };
+		360C890175D6B296B163D32D /* App/FixItLensApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = App/FixItLensApp.swift; sourceTree = "<group>"; };
+		3AEBE79B2E3D789A54791306 /* Components/UIComponents.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Components/UIComponents.swift; sourceTree = "<group>"; };
+		41A53C72B703D9B38F268539 /* Components/CameraComponents.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Components/CameraComponents.swift; sourceTree = "<group>"; };
+		549926A6FBBDBA9DB0DBC7F0 /* Views/SecondaryScreens.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Views/SecondaryScreens.swift; sourceTree = "<group>"; };
+		56F4147E4CE0D762662E42A9 /* Views/ImagePreviewView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Views/ImagePreviewView.swift; sourceTree = "<group>"; };
+		6B54133C9F64C70008D2E878 /* Models/APIModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Models/APIModels.swift; sourceTree = "<group>"; };
+		6D0B7485BC90F86D0B5A8315 /* Views/MainTabView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Views/MainTabView.swift; sourceTree = "<group>"; };
+		75046E84DAE53AA83B440071 /* Resources/Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Resources/Assets.xcassets; sourceTree = "<group>"; };
+		8B93E0D4032038027F9BCBE5 /* Theme/DesignSystem.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Theme/DesignSystem.swift; sourceTree = "<group>"; };
+		8BE4915AFB17B2EF45EA4C26 /* ViewModels/SessionStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ViewModels/SessionStore.swift; sourceTree = "<group>"; };
+		9032A32E6F460D59741EA020 /* Services/ImageProcessing.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Services/ImageProcessing.swift; sourceTree = "<group>"; };
+		99949C997A303DF59CC5E804 /* Services/AppSettings.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Services/AppSettings.swift; sourceTree = "<group>"; };
+		AC26970B862D25CE1C50D24D /* Views/DiagnosisHubView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Views/DiagnosisHubView.swift; sourceTree = "<group>"; };
+		B357FFEF8DDDD9AA0E992BF1 /* Views/AnalyzeProgressView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Views/AnalyzeProgressView.swift; sourceTree = "<group>"; };
+		B97F9B77DC83791706B79C41 /* Services/APIClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Services/APIClient.swift; sourceTree = "<group>"; };
+		BB5944C6515D6D2B678426AB /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		CA4E7E02B54ED14DBB117356 /* Views/GuidedRepairView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Views/GuidedRepairView.swift; sourceTree = "<group>"; };
+		F5BF48AA40CAD7891EB709FC /* FixItLens.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = FixItLens.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		F6C3D05A44F592833AE6FFFC /* Views/OnboardingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Views/OnboardingView.swift; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		4F6F5CC3FCCF73F75AE9CCF4 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		20F4BD606C0F6D1645AE4919 /* FixItLens */ = {
+			isa = PBXGroup;
+			children = (
+				360C890175D6B296B163D32D /* App/FixItLensApp.swift */,
+				41A53C72B703D9B38F268539 /* Components/CameraComponents.swift */,
+				3AEBE79B2E3D789A54791306 /* Components/UIComponents.swift */,
+				6B54133C9F64C70008D2E878 /* Models/APIModels.swift */,
+				B97F9B77DC83791706B79C41 /* Services/APIClient.swift */,
+				99949C997A303DF59CC5E804 /* Services/AppSettings.swift */,
+				9032A32E6F460D59741EA020 /* Services/ImageProcessing.swift */,
+				8B93E0D4032038027F9BCBE5 /* Theme/DesignSystem.swift */,
+				8BE4915AFB17B2EF45EA4C26 /* ViewModels/SessionStore.swift */,
+				B357FFEF8DDDD9AA0E992BF1 /* Views/AnalyzeProgressView.swift */,
+				2475754FF15185769ABACB9A /* Views/CameraHomeView.swift */,
+				AC26970B862D25CE1C50D24D /* Views/DiagnosisHubView.swift */,
+				CA4E7E02B54ED14DBB117356 /* Views/GuidedRepairView.swift */,
+				56F4147E4CE0D762662E42A9 /* Views/ImagePreviewView.swift */,
+				6D0B7485BC90F86D0B5A8315 /* Views/MainTabView.swift */,
+				F6C3D05A44F592833AE6FFFC /* Views/OnboardingView.swift */,
+				549926A6FBBDBA9DB0DBC7F0 /* Views/SecondaryScreens.swift */,
+				BB5944C6515D6D2B678426AB /* Info.plist */,
+				75046E84DAE53AA83B440071 /* Resources/Assets.xcassets */,
+			);
+			path = FixItLens;
+			sourceTree = "<group>";
+		};
+		2B731CEFC6751AAE0EC69B98 = {
+			isa = PBXGroup;
+			children = (
+				20F4BD606C0F6D1645AE4919 /* FixItLens */,
+				86024CAD1E83101D97359D73 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		86024CAD1E83101D97359D73 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				F5BF48AA40CAD7891EB709FC /* FixItLens.app */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		42AEFBAE01D2DFD981F7DA7D /* FixItLens */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = E307BA4BB0667E08C90E7944 /* Build configuration list for PBXNativeTarget "FixItLens" */;
+			buildPhases = (
+				F2AB5FB218DA8B84623F4557 /* Sources */,
+				55B558C7EF820E6E00E5993B /* Resources */,
+				4F6F5CC3FCCF73F75AE9CCF4 /* Frameworks */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = FixItLens;
+			productName = FixItLens;
+			productReference = F5BF48AA40CAD7891EB709FC /* FixItLens.app */;
+			productType = "com.apple.product-type.application";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		46F86FAA6BBF9AC94A7E4595 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = 1;
+				LastSwiftUpdateCheck = 1500;
+				LastUpgradeCheck = 1500;
+			};
+			buildConfigurationList = EA4F9C36169CEDDE418E746E /* Build configuration list for PBXProject "FixItLens" */;
+			compatibilityVersion = "Xcode 14.0";
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				Base,
+			);
+			mainGroup = 2B731CEFC6751AAE0EC69B98;
+			productRefGroup = 86024CAD1E83101D97359D73 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				42AEFBAE01D2DFD981F7DA7D /* FixItLens */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		55B558C7EF820E6E00E5993B /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				C2BEB0A13646DB198814C495 /* Resources/Assets.xcassets in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		F2AB5FB218DA8B84623F4557 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				A0F8BD50901282D5E011D7FC /* App/FixItLensApp.swift in Sources */,
+				E696219A626FFD5FEBDA9BC2 /* Components/CameraComponents.swift in Sources */,
+				FFD594B7AB8004137C19CACB /* Components/UIComponents.swift in Sources */,
+				6B443BBA2C013E8FE0CEF7E6 /* Models/APIModels.swift in Sources */,
+				187953FCC670212ABA5F244C /* Services/APIClient.swift in Sources */,
+				3E1127A64E0C8C427A7584AE /* Services/AppSettings.swift in Sources */,
+				8302837D317348808C6A359C /* Services/ImageProcessing.swift in Sources */,
+				561EDE9E6FCDB4A4D0A24462 /* Theme/DesignSystem.swift in Sources */,
+				A751F3D55F4BC89DF4610021 /* ViewModels/SessionStore.swift in Sources */,
+				F9C6ED140542B3169A120E38 /* Views/AnalyzeProgressView.swift in Sources */,
+				95DDB918007071E8CF59915C /* Views/CameraHomeView.swift in Sources */,
+				89CF84103F3F8BEDFC2156CC /* Views/DiagnosisHubView.swift in Sources */,
+				389E0B9CEE4668175B6BCE6B /* Views/GuidedRepairView.swift in Sources */,
+				8BABBB0134B7D0AD0AD68603 /* Views/ImagePreviewView.swift in Sources */,
+				5E2DF485A82DA700DA7CC874 /* Views/MainTabView.swift in Sources */,
+				224CC37FCA7FD2CC935EEA81 /* Views/OnboardingView.swift in Sources */,
+				1D88FDA3906A04870F3C1248 /* Views/SecondaryScreens.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin XCBuildConfiguration section */
+		123FEAD50246387983EE3405 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ENABLE_MODULES = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				OBJROOT = "/tmp/fixit-lens-ios-build";
+				SDKROOT = iphoneos;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SYMROOT = "/tmp/fixit-lens-ios-build";
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Release;
+		};
+		3E6CC2D2D3A97FCF27D88019 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = F46767DZ64;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = FixItLens/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0.0;
+				OTHER_LDFLAGS = (
+					"$(inherited)",
+					"-L$(SDKROOT)/usr/lib",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.fixitlens.app;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		AD42F6697B035B7580E4FEF9 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ENABLE_MODULES = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_TESTABILITY = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				OBJROOT = "/tmp/fixit-lens-ios-build";
+				ONLY_ACTIVE_ARCH = YES;
+				SDKROOT = iphoneos;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SYMROOT = "/tmp/fixit-lens-ios-build";
+			};
+			name = Debug;
+		};
+		C9573ACD67DEFAA550F0680B /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = F46767DZ64;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = FixItLens/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0.0;
+				OTHER_LDFLAGS = (
+					"$(inherited)",
+					"-L$(SDKROOT)/usr/lib",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.fixitlens.app;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		E307BA4BB0667E08C90E7944 /* Build configuration list for PBXNativeTarget "FixItLens" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				3E6CC2D2D3A97FCF27D88019 /* Debug */,
+				C9573ACD67DEFAA550F0680B /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		EA4F9C36169CEDDE418E746E /* Build configuration list for PBXProject "FixItLens" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				AD42F6697B035B7580E4FEF9 /* Debug */,
+				123FEAD50246387983EE3405 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = 46F86FAA6BBF9AC94A7E4595 /* Project object */;
+}

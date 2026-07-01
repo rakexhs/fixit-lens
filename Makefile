@@ -4,7 +4,7 @@ VENV := $(BACKEND_DIR)/.venv
 PYTHON := $(CURDIR)/$(VENV)/bin/python
 PIP := $(CURDIR)/$(VENV)/bin/pip
 
-.PHONY: setup seed backend mobile web test eval demo clean
+.PHONY: setup seed backend backend-lan mobile web ios ios-prebuild ios-native ios-native-open test eval demo clean assets
 
 setup:
 	@echo "==> Creating backend virtualenv"
@@ -30,8 +30,31 @@ seed:
 backend:
 	cd $(BACKEND_DIR) && $(PYTHON) -m uvicorn app.main:app --host 127.0.0.1 --port 8000 --reload
 
+backend-lan:
+	@echo "==> Starting backend on all interfaces (for iPhone on same Wi‑Fi)"
+	@echo "    Set EXPO_PUBLIC_API_BASE_URL in mobile/.env to http://<your-mac-lan-ip>:8000"
+	cd $(BACKEND_DIR) && $(PYTHON) -m uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+
 mobile:
 	cd $(MOBILE_DIR) && npx expo start
+
+ios:
+	cd $(MOBILE_DIR) && npx expo start --ios
+
+ios-prebuild:
+	cd $(MOBILE_DIR) && npx expo prebuild --platform ios --clean
+	@echo "==> Open mobile/ios/FixItLens.xcworkspace in Xcode, select your team, then Run."
+
+ios-native:
+	cd ios-native && python3 scripts/generate_xcode_project.py
+	@echo "==> Open ios-native/FixItLens.xcodeproj in Xcode and press Run (⌘R)."
+	@echo "    Tip: if build fails due to path colons, set SYMROOT in Xcode to /tmp/fixit-lens-build"
+
+ios-native-open:
+	cd ios-native && python3 scripts/generate_xcode_project.py && open FixItLens.xcodeproj
+
+assets:
+	$(PYTHON) $(MOBILE_DIR)/scripts/generate_app_icon.py
 
 web:
 	cd $(MOBILE_DIR) && npx expo start --web
