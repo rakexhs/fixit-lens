@@ -1,0 +1,6 @@
+{"id": "o1", "filename": "tp_link_ax55_red_led.png", "expected_usable": true, "expected_category": "router", "expected_brand": "TP-Link", "expected_error_code": null}
+{"id": "o2", "filename": "bosch_dishwasher_e24.png", "expected_usable": true, "expected_category": "dishwasher", "expected_brand": "Bosch", "expected_error_code": "E24"}
+{"id": "o3", "filename": "lg_washer_oe.png", "expected_usable": true, "expected_category": "washing_machine", "expected_brand": "LG", "expected_error_code": "OE"}
+{"id": "o4", "filename": "laptop_fan_noise.png", "expected_usable": true, "expected_category": "laptop", "expected_brand": "Lenovo", "expected_error_code": null}
+{"id": "o5", "filename": "microwave_capacitor_warning.png", "expected_usable": true, "expected_category": "dangerous", "expected_brand": null, "expected_error_code": null}
+{"id": "o6", "filename": "blurry_router.png", "expected_usable": false, "expected_category": "unknown", "expected_brand": null, "expected_error_code": null}

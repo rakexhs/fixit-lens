@@ -16,6 +16,13 @@ LEVEL1_KEYWORDS = [
 ]
 
 
+def _keyword_matches(keyword: str, blob: str) -> bool:
+    """Support 'word+word' AND-tokens (order-independent) alongside plain substring phrases."""
+    if "+" in keyword:
+        return all(part in blob for part in keyword.split("+"))
+    return keyword in blob
+
+
 @dataclass
 class SafetyRules:
     blocked_categories: list[dict] = field(default_factory=list)
@@ -55,7 +62,7 @@ def classify_risk(text: str) -> RiskClassification:
 
     for category in rules.blocked_categories:
         for kw in category.get("keywords", []):
-            if kw.lower() in blob:
+            if _keyword_matches(kw.lower(), blob):
                 return RiskClassification(
                     risk_level=3,
                     label=category["label"],
@@ -63,7 +70,7 @@ def classify_risk(text: str) -> RiskClassification:
                     matched_keywords=[kw],
                 )
 
-    matched_high = [kw for kw in rules.high_risk_keywords if kw in blob]
+    matched_high = [kw for kw in rules.high_risk_keywords if _keyword_matches(kw, blob)]
     if matched_high:
         return RiskClassification(
             risk_level=3,

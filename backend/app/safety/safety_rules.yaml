@@ -11,7 +11,7 @@ blocked_categories:
     keywords: ["crt discharge", "cathode ray tube", "flyback transformer", "crt tv repair", "crt monitor repair"]
   - id: gas_appliance
     label: "Gas appliance repair"
-    keywords: ["gas line", "gas valve", "gas leak", "gas stove repair", "gas water heater repair", "gas furnace repair", "smell of gas"]
+    keywords: ["gas line", "gas valve", "gas leak", "gas stove repair", "gas water heater repair", "gas furnace repair", "smell of gas", "smell+gas", "gas+stove", "gas+valve"]
   - id: refrigerant
     label: "Refrigerant handling"
     keywords: ["refrigerant", "freon", "coolant line", "compressor coil", "ac coil repair", "r134a", "r410a"]
@@ -20,7 +20,7 @@ blocked_categories:
     keywords: ["mains wiring", "breaker panel", "circuit panel repair", "rewire outlet", "electrical panel", "live wire repair", "fuse box repair"]
   - id: swollen_battery
     label: "Swollen lithium battery handling"
-    keywords: ["swollen battery", "bulging battery", "puffy battery", "battery bulge", "battery swelling"]
+    keywords: ["swollen battery", "bulging battery", "puffy battery", "battery bulge", "battery swelling", "battery+swollen", "battery+bulging", "battery+puffy", "battery+swelling"]
   - id: exposed_wire
     label: "Exposed wire repair"
     keywords: ["exposed wire", "frayed wire", "bare wire", "exposed wiring", "frayed cord"]
@@ -32,7 +32,7 @@ blocked_categories:
     keywords: ["burning smell", "smells like burning", "sparks", "sparking", "smoke coming from"]
   - id: water_near_outlet
     label: "Water near outlet / live electricity"
-    keywords: ["water near outlet", "water near electricity", "flooded outlet", "water on power strip", "wet outlet"]
+    keywords: ["water near outlet", "water near electricity", "flooded outlet", "water on power strip", "wet outlet", "water+outlet", "water+electricity", "flooded+outlet"]
   - id: medical_device
     label: "Medical-device repair"
     keywords: ["cpap repair", "pacemaker", "glucose monitor repair", "nebulizer repair", "medical device repair", "insulin pump"]
@@ -64,6 +64,11 @@ high_risk_keywords:
   - "steering"
   - "crt"
   - "flyback"
+  - "smell+gas"
+  - "gas+stove"
+  - "battery+swollen"
+  - "battery+bulging"
+  - "water+outlet"
 
 moderate_risk_keywords:
   - "open the back cover"

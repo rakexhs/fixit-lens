@@ -66,6 +66,7 @@ def rebuild_global_index_from_db(db) -> int:
             "error_codes_json": row.error_codes_json,
             "is_safety": row.is_safety,
             "is_uploaded": row.is_uploaded,
+            "position": row.position,
         }
         for row in rows
     ]

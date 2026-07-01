@@ -204,6 +204,12 @@ def diagnose(
 
         safety_decision = evaluate_safety(combined_text)
 
+        # Relevance ranking picks *which* chunks matter; re-order that same set into
+        # natural document order so guided-repair steps read as a coherent sequence.
+        ordered_for_generation = sorted(
+            retrieved, key=lambda rc: (rc.chunk.get("manual_id", ""), rc.chunk.get("position", 0))
+        )
+
         generation_timer = Timer()
         with generation_timer.measure():
             context = GenerationContext(
@@ -216,7 +222,7 @@ def diagnose(
                 device_confidence=device_confidence,
                 problem_confidence=problem_confidence,
                 safety=safety_decision,
-                retrieved_chunks=retrieved,
+                retrieved_chunks=ordered_for_generation,
             )
             answer_json, provider_used = generate_answer(context)
 

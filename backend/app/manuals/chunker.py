@@ -3,7 +3,7 @@ from app.manuals.parser import ParsedManual, slugify
 
 def chunk_manual(manual: ParsedManual, is_uploaded: bool = False) -> list[dict]:
     chunks: list[dict] = []
-    for section in manual.sections:
+    for position, section in enumerate(manual.sections):
         chunk_id = f"{manual.manual_id}#{slugify(section.heading)}"
         chunks.append(
             {
@@ -19,6 +19,7 @@ def chunk_manual(manual: ParsedManual, is_uploaded: bool = False) -> list[dict]:
                 "error_codes_json": manual.error_codes,
                 "is_safety": manual.is_safety or "safety" in section.heading.lower(),
                 "is_uploaded": is_uploaded,
+                "position": position,
             }
         )
     return chunks
