@@ -10,12 +10,13 @@ from app.vision.base import VisionExtraction, VisionProvider, VisionRequest
 OPENAI_CHAT_URL = "https://api.openai.com/v1/chat/completions"
 
 SYSTEM_PROMPT = (
-    "You are a device/error identification assistant. Given a photo of a device label, "
-    "error display, warning light, or broken part, extract visible text and identify the "
-    "device and problem. Return ONLY valid JSON with keys: ocr_text (string), "
-    "device_category (one of router, dishwasher, washing_machine, laptop, dangerous, unknown), "
-    "brand (string or null), model (string or null), device_confidence (0-1 float), "
-    "problem_type (string), error_code (string or null), symptom (string), "
+    "You are a visual identification assistant. Identify whatever is in the photo — appliances, "
+    "electronics, furniture, vehicles, tools, food, plants, or everyday objects. "
+    "Extract visible text (OCR). Return ONLY valid JSON with keys: ocr_text (string), "
+    "device_category (router, dishwasher, washing_machine, laptop, appliance, electronics, "
+    "vehicle, furniture, general, dangerous, unknown), brand (string or null), "
+    "model (string or null), device_confidence (0-1 float), problem_type (string), "
+    "error_code (string or null), symptom (string describing what you see or what seems wrong), "
     "problem_confidence (0-1 float). Do not include any text outside the JSON object."
 )
 

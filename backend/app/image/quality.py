@@ -5,10 +5,11 @@ import cv2
 import numpy as np
 from PIL import Image
 
-BLUR_VARIANCE_THRESHOLD = 60.0
-MIN_DIMENSION = 200
-DARK_MEAN_THRESHOLD = 35.0
-BRIGHT_MEAN_THRESHOLD = 235.0
+BLUR_VARIANCE_THRESHOLD = 25.0
+MIN_DIMENSION = 120
+DARK_MEAN_THRESHOLD = 20.0
+BRIGHT_MEAN_THRESHOLD = 245.0
+HARD_REJECT_SCORE = 0.08
 
 
 @dataclass
@@ -47,6 +48,6 @@ def assess_image_quality(image_bytes: bytes) -> QualityResult:
     size_score = 1.0 if min(width, height) >= MIN_DIMENSION else min(width, height) / MIN_DIMENSION
 
     score = round(0.5 * blur_score + 0.3 * brightness_score + 0.2 * size_score, 4)
-    usable = len(issues) == 0
+    usable = score >= HARD_REJECT_SCORE
 
     return QualityResult(usable=usable, score=score, issues=issues, width=width, height=height)

@@ -4,7 +4,7 @@ import re
 from dataclasses import dataclass, field
 
 import httpx
-from tenacity import retry, stop_after_attempt, wait_exponential
+from tenacity import RetryError, retry, stop_after_attempt, wait_exponential
 
 from app.config import get_settings
 from app.generation.prompts import SYSTEM_PROMPT, build_user_prompt
@@ -83,18 +83,45 @@ def deterministic_generate(context: GenerationContext) -> dict:
         }
 
     if context.device_category == "unknown" and not context.retrieved_chunks:
+        visible = (context.symptom or context.user_text or "the item in your photo").strip()
         return {
             "device_summary": device_summary,
             "diagnosis": {
-                "likely_issue": "Unable to confidently identify the device or problem yet",
-                "confidence": 0.0,
-                "reasoning_summary": "Not enough information was extracted from the image or text to retrieve relevant guidance.",
+                "likely_issue": f"What we see: {visible}".strip(),
+                "confidence": round(max(context.device_confidence, context.problem_confidence, 0.35), 2),
+                "reasoning_summary": (
+                    "We could not match a specific repair manual, but here is a general assessment. "
+                    "If this is an appliance or electronics issue, try a clearer photo of the label or error screen."
+                ),
             },
             "safety": safety_dict,
-            "steps": [],
-            "clarifying_question": (
-                "Could you tell me the device type, brand/model, and any error code or symptom you see?"
-            ),
+            "steps": [
+                {
+                    "step_number": 1,
+                    "title": "Describe what you see",
+                    "instruction": (
+                        "Note any visible damage, error messages, unusual sounds, leaks, or warning lights. "
+                        "Unplug the device if you smell burning or see sparks."
+                    ),
+                    "why": "A clear symptom list helps narrow down safe next steps.",
+                    "tools": [],
+                    "citation_ids": [],
+                    "stop_if": ["Stop if you see smoke, sparks, gas smell, or flooding."],
+                },
+                {
+                    "step_number": 2,
+                    "title": "Check the basics",
+                    "instruction": (
+                        "Confirm power/network connections, vents are clear, filters are clean, and settings "
+                        "were not changed recently. Retake a photo of any label or error code for a more specific answer."
+                    ),
+                    "why": "Many issues are external and safe to check without opening the device.",
+                    "tools": [],
+                    "citation_ids": [],
+                    "stop_if": [],
+                },
+            ],
+            "clarifying_question": "What type of item is this, and what problem are you noticing?",
             "sources": [],
         }
 
@@ -168,20 +195,20 @@ def _call_openai_text(prompt: str, settings) -> dict:
     return json.loads(data["choices"][0]["message"]["content"])
 
 
-@retry(stop=stop_after_attempt(2), wait=wait_exponential(multiplier=0.5, max=3))
+@retry(stop=stop_after_attempt(2), wait=wait_exponential(multiplier=0.5, max=6))
 def _call_gemini_text(prompt: str, settings) -> dict:
-    url = f"https://generativelanguage.googleapis.com/v1beta/models/{settings.gemini_text_model}:generateContent"
-    payload = {
-        "contents": [{"parts": [{"text": f"{SYSTEM_PROMPT}\n\n{prompt}"}]}],
-        "generationConfig": {"temperature": 0.1},
-    }
-    with httpx.Client(timeout=20.0) as client:
-        response = client.post(url, params={"key": settings.gemini_api_key}, json=payload)
-        response.raise_for_status()
-        data = response.json()
-    text = data["candidates"][0]["content"]["parts"][0]["text"]
-    text = re.sub(r"^```(?:json)?|```$", "", text.strip(), flags=re.MULTILINE).strip()
-    return json.loads(text)
+    from app.providers.gemini_interactions import create_interaction, parse_json_output
+
+    data = create_interaction(
+        settings.gemini_api_key,
+        settings.gemini_text_model,
+        f"{SYSTEM_PROMPT}\n\n{prompt}",
+        response_format={
+            "type": "text",
+            "mime_type": "application/json",
+        },
+    )
+    return parse_json_output(data)
 
 
 def generate_answer(context: GenerationContext) -> tuple[dict, str]:
@@ -207,7 +234,7 @@ def generate_answer(context: GenerationContext) -> tuple[dict, str]:
             if provider_name == "gemini" and settings.gemini_api_key:
                 data = _call_gemini_text(prompt, settings)
                 return data, "gemini"
-        except Exception:
+        except (RetryError, Exception):
             logger.exception("Cloud provider %s generation failed, trying next provider", provider_name)
             continue
 

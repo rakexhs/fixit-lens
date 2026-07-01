@@ -1,6 +1,6 @@
 # FixIt Lens Evaluation Report
 
-_Generated 2026-07-01T03:48:21.804553+00:00 by `backend/app/evals/run_evals.py` against 50 indexed manual chunks. All numbers below are computed live from the seeded manuals and eval datasets in `backend/data/eval/` - none are fabricated._
+_Generated 2026-07-01T05:16:22.410669+00:00 by `backend/app/evals/run_evals.py` against 50 indexed manual chunks. All numbers below are computed live from the seeded manuals and eval datasets in `backend/data/eval/` - none are fabricated._
 
 ## Retrieval (hybrid BM25 + TF-IDF)
 
@@ -9,8 +9,8 @@ _Generated 2026-07-01T03:48:21.804553+00:00 by `backend/app/evals/run_evals.py` 
 - Recall@5: **100.0%**
 - MRR: 0.9594
 - nDCG@5: 0.9693
-- Avg retrieval latency: 0.70 ms
-- P95 retrieval latency: 0.81 ms
+- Avg retrieval latency: 1.13 ms
+- P95 retrieval latency: 2.49 ms
 
 ## Safety classification
 
@@ -31,8 +31,8 @@ _Generated 2026-07-01T03:48:21.804553+00:00 by `backend/app/evals/run_evals.py` 
 
 - Cases: 32
 - Avg citation coverage across generated steps: **100.0%** (target 100%)
-- Avg diagnosis latency: 6.13 ms
-- P95 diagnosis latency: 7.26 ms
+- Avg diagnosis latency: 6.69 ms
+- P95 diagnosis latency: 7.94 ms
 - Provider usage: {'mock': 32}
 
 ## Known weaknesses

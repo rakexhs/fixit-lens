@@ -28,6 +28,12 @@ def list_sessions(db: DBSession = Depends(get_db)) -> list[SessionSummary]:
     return [_to_summary(s) for s in sessions]
 
 
+@router.delete("/api/sessions")
+def delete_all_sessions(db: DBSession = Depends(get_db)) -> dict:
+    deleted = repository.delete_all_sessions(db)
+    return {"status": "ok", "deleted": deleted}
+
+
 @router.get("/api/sessions/{session_id}", response_model=SessionDetail)
 def get_session_detail(session_id: str, db: DBSession = Depends(get_db)) -> SessionDetail:
     session = repository.get_session(db, session_id)

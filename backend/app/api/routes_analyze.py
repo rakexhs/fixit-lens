@@ -10,8 +10,35 @@ from app.schemas import AnalyzeImageResponse, DetectedDevice, DetectedProblem, I
 
 router = APIRouter()
 
-ALLOWED_CONTENT_TYPES = {"image/jpeg", "image/png", "image/webp"}
+ALLOWED_CONTENT_TYPES = {"image/jpeg", "image/png", "image/webp", "image/jpg", "application/octet-stream"}
 UNSAFE_FILENAME_RE = re.compile(r"[^A-Za-z0-9_.\-]")
+
+
+def _detect_content_type(filename: str, image_bytes: bytes, declared: str | None) -> str | None:
+    if declared in {"image/jpeg", "image/png", "image/webp"}:
+        return declared
+    if image_bytes[:8] == b"\x89PNG\r\n\x1a\n":
+        return "image/png"
+    if image_bytes[:2] == b"\xff\xd8":
+        return "image/jpeg"
+    if len(image_bytes) >= 12 and image_bytes[:4] == b"RIFF" and image_bytes[8:12] == b"WEBP":
+        return "image/webp"
+    lower = filename.lower()
+    if lower.endswith(".png"):
+        return "image/png"
+    if lower.endswith((".jpg", ".jpeg")):
+        return "image/jpeg"
+    if lower.endswith(".webp"):
+        return "image/webp"
+    # Phone uploads sometimes omit MIME type; accept valid image bytes.
+    try:
+        from PIL import Image
+        from io import BytesIO
+
+        Image.open(BytesIO(image_bytes)).verify()
+        return "image/jpeg"
+    except Exception:
+        return None
 
 
 def _sanitize_filename(filename: str | None) -> str:
@@ -30,17 +57,16 @@ async def analyze_image_route(
 ) -> AnalyzeImageResponse:
     settings = get_settings()
 
-    if image.content_type not in ALLOWED_CONTENT_TYPES:
-        raise HTTPException(status_code=400, detail="Unsupported image type. Please upload a JPEG, PNG, or WEBP image.")
-
     image_bytes = await image.read()
+    filename = _sanitize_filename(image.filename)
+    content_type = _detect_content_type(filename, image_bytes, image.content_type)
+    if content_type is None:
+        raise HTTPException(status_code=400, detail="Unsupported image type. Please upload a JPEG, PNG, or WEBP image.")
     max_bytes = settings.max_image_mb * 1024 * 1024
     if len(image_bytes) > max_bytes:
         raise HTTPException(status_code=413, detail=f"Image exceeds the {settings.max_image_mb}MB size limit.")
     if len(image_bytes) == 0:
         raise HTTPException(status_code=400, detail="Uploaded image is empty.")
-
-    filename = _sanitize_filename(image.filename)
 
     try:
         result = analyze_image(db, image_bytes, filename, user_hint)

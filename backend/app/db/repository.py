@@ -132,6 +132,15 @@ def bulk_upsert_manual_chunks(db: DBSession, chunks: list[dict]) -> int:
     return count
 
 
+def delete_all_sessions(db: DBSession) -> int:
+    sessions = list(db.scalars(select(RepairSession)))
+    count = len(sessions)
+    for session in sessions:
+        db.delete(session)
+    db.commit()
+    return count
+
+
 def list_manual_chunks(db: DBSession) -> list[ManualChunk]:
     return list(db.scalars(select(ManualChunk)))
 

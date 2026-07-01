@@ -14,10 +14,9 @@ def test_sharp_image_is_usable():
     assert result.issues == []
 
 
-def test_blurry_image_is_flagged_unusable():
+def test_blurry_image_is_flagged_with_warning():
     image_bytes = (DEMO_IMAGES_DIR / "blurry_router.png").read_bytes()
     result = assess_image_quality(image_bytes)
-    assert result.usable is False
     assert any("blurry" in issue.lower() for issue in result.issues)
 
 

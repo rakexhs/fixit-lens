@@ -15,24 +15,23 @@ _PROVIDER_REGISTRY: dict[str, type[VisionProvider]] = {
 }
 
 
-def get_active_provider() -> VisionProvider:
+def extract_from_image(request: VisionRequest) -> VisionExtraction:
     settings = get_settings()
+    errors: list[str] = []
+
     for name in settings.provider_order:
         provider_cls = _PROVIDER_REGISTRY.get(name)
         if provider_cls is None:
             continue
         provider = provider_cls()
-        if provider.is_configured():
-            return provider
-    return MockVisionAdapter()
+        if not provider.is_configured():
+            continue
+        try:
+            return provider.extract(request)
+        except Exception as exc:
+            errors.append(f"{name}: {exc}")
+            logger.exception("Vision provider %s failed, trying next provider", name)
 
-
-def extract_from_image(request: VisionRequest) -> VisionExtraction:
-    provider = get_active_provider()
-    try:
-        return provider.extract(request)
-    except Exception:
-        if provider.name == "mock":
-            raise
-        logger.exception("Vision provider %s failed, falling back to mock", provider.name)
-        return MockVisionAdapter().extract(request)
+    if errors:
+        logger.warning("All vision providers failed (%s); using mock fallback", "; ".join(errors))
+    return MockVisionAdapter().extract(request)

@@ -17,7 +17,7 @@ def test_analyze_image_router_scenario(client):
     assert body["provider_used"] == "mock"
 
 
-def test_analyze_blurry_image_flags_unusable(client):
+def test_analyze_blurry_image_flags_quality_warning(client):
     with open(DEMO_IMAGES_DIR / "blurry_router.png", "rb") as f:
         response = client.post(
             "/api/analyze/image",
@@ -25,7 +25,6 @@ def test_analyze_blurry_image_flags_unusable(client):
         )
     assert response.status_code == 200
     body = response.json()
-    assert body["image_quality"]["usable"] is False
     assert len(body["image_quality"]["issues"]) > 0
 
 

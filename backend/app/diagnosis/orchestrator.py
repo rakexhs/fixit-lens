@@ -58,24 +58,25 @@ def analyze_image(
         repository.add_ocr_result(
             db, session_id=session.id, text="", tokens_json=[], confidence=0.0, provider_used="none"
         )
-        return AnalyzeImageResult(
-            session_id=session.id,
-            usable=False,
-            quality_score=quality.score,
-            issues=quality.issues,
-            ocr_text="",
-            ocr_tokens=[],
-            ocr_confidence=0.0,
-            device_category="unknown",
-            brand=None,
-            model=None,
-            device_confidence=0.0,
-            problem_type="unknown",
-            error_code=None,
-            symptom="",
-            problem_confidence=0.0,
-            provider_used="none",
-        )
+        if quality.score < 0.08:
+            return AnalyzeImageResult(
+                session_id=session.id,
+                usable=False,
+                quality_score=quality.score,
+                issues=quality.issues,
+                ocr_text="",
+                ocr_tokens=[],
+                ocr_confidence=0.0,
+                device_category="unknown",
+                brand=None,
+                model=None,
+                device_confidence=0.0,
+                problem_type="unknown",
+                error_code=None,
+                symptom="",
+                problem_confidence=0.0,
+                provider_used="none",
+            )
 
     normalized = normalize_image(image_bytes)
     extraction = extract_from_image(VisionRequest(image_bytes=normalized, filename=filename, user_hint=user_hint))
