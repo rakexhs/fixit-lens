@@ -1,45 +1,41 @@
 # FixIt Lens
 
-**Camera-guided AI repair assistant.** Scan a device label, error code, warning light, or
-broken part; FixIt Lens identifies the device and problem, retrieves trusted manual
-excerpts, runs a safety gate, and returns cited, step-by-step troubleshooting — or
-refuses and points you to a professional when the repair is genuinely dangerous.
+**Camera-guided AI repair assistant.** Point your phone at a device label, error code, warning light, or broken part — FixIt Lens identifies what it sees, pulls relevant manual excerpts, runs a safety gate, and returns cited troubleshooting steps. High-risk repairs are blocked with a clear “call a professional” message.
 
-> Screenshots/demo video: see [docs/demo_script.md](docs/demo_script.md) for a scripted
-> walkthrough you can record from the running app (no keys required).
+## Screenshots
+
+Native iOS app running against a live backend with Gemini vision + text:
+
+| Onboarding | Camera scan | Analysis pipeline |
+|:---:|:---:|:---:|
+| ![Scan anything](docs/screenshots/onboarding-scan.jpg) | ![Camera scan](docs/screenshots/camera-scan.jpg) | ![Analyzing](docs/screenshots/analyzing.jpg) |
+
+| Diagnosis result | Safety onboarding | Insights (Gemini provider) |
+|:---:|:---:|:---:|
+| ![Diagnosis](docs/screenshots/diagnosis.jpg) | ![Safety first](docs/screenshots/onboarding-safety.jpg) | ![Insights](docs/screenshots/insights.jpg) |
 
 ## Why this isn't a generic chatbot
 
 FixIt Lens enforces one rule in code, not just in a prompt:
-**no citation + no safety classification = no repair instruction.** Every procedural step
-must cite a real, retrieved manual chunk (`backend/app/rag/citation_validator.py`), and
-every request runs through a rule-based safety classifier *before* generation
-(`backend/app/safety/`) — a blocked category zeroes out `steps` regardless of what a
-cloud LLM tried to produce. See [SAFETY.md](SAFETY.md) for the full model.
+**no citation + no safety classification = no repair instruction.** Every procedural step must cite a real, retrieved manual chunk (`backend/app/rag/citation_validator.py`), and every request runs through a rule-based safety classifier *before* generation (`backend/app/safety/`) — a blocked category zeroes out `steps` regardless of what a cloud LLM tried to produce. See [SAFETY.md](SAFETY.md) for the full model.
 
 ## Features
 
-- Camera-first mobile UI (Expo/React Native) with an animated scan overlay, glass-card
-  premium dark theme, confidence chips, safety badges, and a step-by-step guided repair
-  flow with Done/Didn't work/Skip/Stop feedback.
-- FastAPI backend: image quality checks, cloud vision/OCR extraction, device/error-code
-  normalization, hybrid BM25+TF-IDF retrieval over manuals, rule-based safety gate, and
-  structured JSON answer generation.
-- Works with **zero API keys** out of the box via a deterministic mock provider — flip on
-  real Gemini/OpenAI vision+text by adding keys to `backend/.env`.
-- A real, from-scratch evaluation suite (32 retrieval cases, 27 safety cases, 6 OCR
-  cases) with a regenerated `backend/reports/eval_report.md` on every run.
-- Manual upload flow: paste/upload your own manual text and it becomes an immediately
-  searchable, priority-ranked source.
+- **Native iOS app** (SwiftUI) — camera capture, image crop/resize before analyze, editable backend URL, repair history, guided steps, and insights dashboard. See [docs/native_ios.md](docs/native_ios.md).
+- **Expo/React Native app** — animated scan overlay, glass-card dark theme, confidence chips, safety badges, and step-by-step guided repair flow with Done/Didn't work/Skip/Stop feedback.
+- **FastAPI backend** — image quality checks, cloud vision/OCR extraction, device/error-code normalization, hybrid BM25+TF-IDF retrieval over manuals, rule-based safety gate, and structured JSON answer generation.
+- **Gemini Interactions API** (`gemini-3.5-flash`) for vision + text when `GEMINI_API_KEY` is set; OpenAI and a deterministic mock provider as fallbacks.
+- **Works with zero API keys** via the mock provider for offline demos and tests.
+- Evaluation suite (32 retrieval, 27 safety, 6 OCR cases) with `backend/reports/eval_report.md` regenerated on every run.
+- Manual upload flow: paste or upload your own manual text and it becomes an immediately searchable source.
 
 ## Architecture
 
-See [ARCHITECTURE.md](ARCHITECTURE.md) for full diagrams (system, retrieval flow, safety
-gate, data model) and the failure-handling/scaling/deployment plan. High level:
+See [ARCHITECTURE.md](ARCHITECTURE.md) for full diagrams. High level:
 
 ```mermaid
 flowchart LR
-    A[Expo mobile app] -->|image or text| B[FastAPI backend]
+    A[iOS / Expo mobile app] -->|image or text| B[FastAPI backend]
     B --> C[Image quality check]
     C --> D[Vision/OCR: Gemini/OpenAI or mock]
     D --> E[Device + error-code normalization]
@@ -52,114 +48,75 @@ flowchart LR
     B --> A
 ```
 
-## User flows
-
-Flow A (camera diagnosis), Flow B (type error code), Flow C (manual upload), Flow D
-(dangerous refusal), Flow E (bad image) — see [docs/product_spec.md](docs/product_spec.md)
-for details and [docs/demo_script.md](docs/demo_script.md) for a click-through script.
-
 ## Tech stack
 
-**Frontend**: React Native, Expo (SDK 57), TypeScript, expo-camera, expo-image-picker,
-React Navigation, Zustand, expo-linear-gradient, expo-blur, expo-haptics.
+**iOS (native)**: SwiftUI, AVFoundation camera, URLSession API client.
 
-**Backend**: Python 3.11, FastAPI, Uvicorn, Pydantic/Pydantic Settings, SQLAlchemy +
-SQLite, Pillow, OpenCV (headless), scikit-learn (TF-IDF), rank-bm25, HTTPX, Tenacity,
-PyYAML, pytest.
+**Mobile (Expo)**: React Native, Expo SDK 57, TypeScript, expo-camera, React Navigation, Zustand.
 
-No PyTorch, transformers, sentence-transformers, Ollama, llama.cpp, or vLLM — this is a
-cloud-API-first project with lightweight local logic, sized to run comfortably on a
-MacBook M1.
+**Backend**: Python 3.11, FastAPI, Uvicorn, Pydantic Settings, SQLAlchemy + SQLite, Pillow, OpenCV (headless), scikit-learn, rank-bm25, HTTPX, Tenacity, pytest.
+
+No PyTorch or local LLM runtimes — cloud-API-first with lightweight local logic, sized to run on a MacBook M1.
 
 ## Cloud model strategy
 
-A provider-adapter interface (`backend/app/vision/base.py`,
-`backend/app/generation/answer_generator.py`) picks the first configured provider from
-`PROVIDER_PRIORITY` (default `gemini,openai,mock`):
+Provider adapters (`backend/app/vision/`, `backend/app/generation/answer_generator.py`) try providers in `PROVIDER_PRIORITY` order (default `gemini,openai,mock`):
 
-- **Gemini** (`gemini-1.5-flash` by default) for vision + text, if `GEMINI_API_KEY` is set.
-- **OpenAI** (`gpt-4o-mini` by default) for vision + text, if `OPENAI_API_KEY` is set.
-- **Mock** — deterministic, offline, no network calls — used automatically when no keys
-  are present, and as an automatic fallback if a cloud call fails.
+| Provider | Default model | When used |
+|---|---|---|
+| **Gemini** | `gemini-3.5-flash` | `GEMINI_API_KEY` set — uses the [Interactions API](https://ai.google.dev/gemini-api/docs/get-started) with `x-goog-api-key` header auth |
+| **OpenAI** | `gpt-4o-mini` | `OPENAI_API_KEY` set |
+| **Mock** | — | No keys configured, or cloud call fails |
 
-API keys live only in `backend/.env` (gitignored) and are never sent to or bundled with
-the mobile app.
-
-## AI pipeline
-
-Image quality check → vision/OCR extraction → normalization (brand/model/error-code) →
-device/problem classification → hybrid retrieval → safety classification → answer
-generation (cloud LLM or deterministic fallback) → citation validation → persistence.
-Full detail in [ARCHITECTURE.md](ARCHITECTURE.md#ai-pipeline-per-diagnosis-request).
-
-## Safety system
-
-See [SAFETY.md](SAFETY.md): 4 risk levels (0-3), 12 explicitly blocked high-risk
-categories, mandatory citations, and a hard-coded refusal message for anything
-requiring a qualified professional.
-
-## RAG / manual retrieval
-
-7 seeded manuals (`backend/data/manuals/*.md`), parsed by heading into 50 chunks, indexed
-with both BM25 (`rank-bm25`) and TF-IDF (`scikit-learn`), fused with weighted boosts for
-exact error-code, brand/model, category, and safety-relevance matches, plus a priority
-boost for user-uploaded manuals. See `backend/app/rag/hybrid.py`.
-
-## Evaluation metrics
-
-Full methodology and latest numbers in [EVALUATION.md](EVALUATION.md). Headline results
-from the current mock-mode run (`backend/reports/eval_report.md`):
-
-| Metric | Result |
-|---|---|
-| Recall@3 / Recall@5 | 96.9% / 100.0% |
-| MRR / nDCG@5 | 0.959 / 0.969 |
-| Safety high-risk block rate | **100.0%** |
-| Safety false negative rate | **0.0%** |
-| Citation coverage | **100.0%** |
-| OCR/device ID accuracy (demo images) | 100.0% |
+API keys live only in `backend/.env` (gitignored) and are never bundled with the mobile app.
 
 ## Quickstart
 
 ```bash
 cd fixit-lens
 make setup   # backend venv + deps, mobile npm deps
-make seed    # generate demo images, seed manuals, build retrieval index
+make seed    # demo images, seed manuals, build retrieval index
 make test    # backend pytest + mobile typecheck/lint
-make eval    # run the evaluation suite, writes backend/reports/eval_report.md
 make backend # start FastAPI on http://127.0.0.1:8000
 ```
 
-In another terminal:
+### Native iOS (recommended on a physical iPhone)
 
 ```bash
-make mobile  # or: make web
+make backend-lan          # backend on 0.0.0.0:8000 for same Wi‑Fi
+make ios-native-open      # opens FixItLens.xcodeproj in Xcode → Run
 ```
 
-> **Note for unusual paths**: if your project path contains a colon (`:`), Python's
-> `venv` module refuses to create a virtualenv there. `make setup` detects this
-> automatically and creates the venv under `~/.venvs/fixit-lens-backend`, symlinked back
-> into `backend/.venv` — no action needed.
+In the app: **Account → Backend status → Edit URL** and enter `http://<your-mac-lan-ip>:8000`.
+
+Full guide: [docs/native_ios.md](docs/native_ios.md)
+
+### Expo mobile
+
+```bash
+make mobile   # or: make web / make ios
+```
+
+Physical iPhone via Expo: [docs/ios_build.md](docs/ios_build.md)
+
+> **Paths with colons** (`AI:ML/...`): `make setup` creates the Python venv under `~/.venvs/fixit-lens-backend` and symlinks it — no action needed.
 
 ## Environment variables
 
-See [.env.example](.env.example) (root reference), [backend/.env.example](backend/.env.example)
-(copied to `backend/.env` by `make setup`), and [mobile/.env.example](mobile/.env.example).
-Key variables:
+Copy `backend/.env.example` → `backend/.env` (done automatically by `make setup`):
 
 ```
 PROVIDER_PRIORITY=gemini,openai,mock
-GEMINI_API_KEY=
+GEMINI_API_KEY=          # from https://aistudio.google.com/apikey
+GEMINI_VISION_MODEL=gemini-3.5-flash
+GEMINI_TEXT_MODEL=gemini-3.5-flash
 OPENAI_API_KEY=
 EXPO_PUBLIC_API_BASE_URL=http://127.0.0.1:8000
 ```
 
-To enable real cloud vision/LLM calls, add a Gemini and/or OpenAI key to `backend/.env`
-and restart `make backend` — no code changes needed.
+Restart `make backend` after adding keys.
 
 ## API examples
-
-Full contract in [docs/api_contract.md](docs/api_contract.md). Quick example:
 
 ```bash
 curl -X POST http://127.0.0.1:8000/api/analyze/image \
@@ -170,10 +127,17 @@ curl -X POST http://127.0.0.1:8000/api/diagnose \
   -d '{"device_category":"dishwasher","brand":"Bosch","error_code":"E24"}'
 ```
 
-## Demo scenarios
+Full contract: [docs/api_contract.md](docs/api_contract.md)
 
-Six scripted, zero-key demo scenarios (router, dishwasher, washing machine, laptop,
-dangerous refusal, bad image) in [docs/demo_script.md](docs/demo_script.md).
+## Evaluation metrics
+
+See [EVALUATION.md](EVALUATION.md). Headline mock-mode results (`backend/reports/eval_report.md`):
+
+| Metric | Result |
+|---|---|
+| Recall@3 / Recall@5 | 96.9% / 100.0% |
+| Safety high-risk block rate | **100.0%** |
+| Citation coverage | **100.0%** |
 
 ## Tests
 
@@ -181,58 +145,33 @@ dangerous refusal, bad image) in [docs/demo_script.md](docs/demo_script.md).
 make test
 ```
 
-51 backend pytest cases (health, image quality, error-code parsing, safety classifier,
-retriever, citation validator, answer schema, diagnosis orchestrator, analyze/diagnose
-API), plus mobile TypeScript typecheck and ESLint — all passing with zero errors.
+Backend pytest (health, safety, retrieval, citation, diagnosis, analyze API) plus mobile TypeScript typecheck and ESLint.
+
+## Safety
+
+See [SAFETY.md](SAFETY.md): 4 risk levels, 12 blocked high-risk categories, mandatory citations, and hard refusal for work requiring a qualified professional.
 
 ## Limitations
 
 - Demo-scale manual corpus (7 manuals, 50 chunks) — not a production knowledge base.
-- Mock vision provider recognizes demo images by filename, not real OCR; real-photo
-  accuracy requires enabling a cloud vision provider.
-- BM25/TF-IDF retrieval has no semantic embedding model (see
-  [EVALUATION.md](EVALUATION.md#known-weaknesses)).
+- BM25/TF-IDF retrieval has no semantic embedding model.
 - Not a certified diagnostic tool or a replacement for a qualified technician.
 
-## Privacy & safety
+## Privacy
 
-See [SAFETY.md](SAFETY.md#privacy-notes). API keys never leave `backend/.env`; images are
-processed in memory and not persisted; a Settings-screen action clears local device data.
+API keys never leave `backend/.env`. Images are processed in memory. **Account → Clear all history** deletes sessions on the server and locally.
 
-## Production roadmap
+## Docs
 
-See [ARCHITECTURE.md](ARCHITECTURE.md#scaling-plan-beyond-this-mvp) and
-[ARCHITECTURE.md](ARCHITECTURE.md#production-deployment-plan) for the path to a managed
-vector store, Postgres, containerized deployment, and EAS-built mobile releases.
+| Doc | Contents |
+|---|---|
+| [ARCHITECTURE.md](ARCHITECTURE.md) | System design, RAG flow, scaling plan |
+| [SAFETY.md](SAFETY.md) | Risk model and blocked categories |
+| [EVALUATION.md](EVALUATION.md) | Eval methodology and metrics |
+| [docs/native_ios.md](docs/native_ios.md) | SwiftUI app setup on a real iPhone |
+| [docs/ios_build.md](docs/ios_build.md) | Expo on physical iPhone |
+| [docs/demo_script.md](docs/demo_script.md) | Scripted demo walkthrough |
 
-## Resume bullets
+## License
 
-- Built FixIt Lens, a React Native + FastAPI multimodal repair assistant using cloud
-  vision APIs, device/error-code extraction, and hybrid RAG over manuals to generate
-  cited, safety-checked troubleshooting steps.
-- Implemented retrieval over 50 manual chunks with BM25/TF-IDF hybrid search, achieving
-  Recall@3 of 96.9% (Recall@5 of 100%) across 32 device and error-code queries.
-- Designed a repair-safety guardrail system that blocks 12 categories of high-voltage/
-  gas/electrical procedures with a 100% high-risk block rate and 0% false negatives
-  across 27 test cases, validates 100% citation coverage for procedural steps, and logs
-  latency, confidence, provider usage, and feedback for every diagnosis.
-
-## Interview talking points
-
-- Why the citation validator runs as a hard code-level gate (not a prompt instruction),
-  and how it behaves identically whether the answer came from Gemini, OpenAI, or the
-  deterministic fallback.
-- Why safety classification happens *before* and *independent of* generation, so a
-  jailbroken or hallucinating LLM still can't produce steps for a blocked category.
-- The hybrid BM25+TF-IDF fusion with metadata boosts, and the retrieval-vs-presentation
-  ordering trick (rank by relevance, then re-sort the selected set into natural document
-  order so guided-repair steps read coherently).
-- The provider-adapter pattern that lets the whole app run fully offline/deterministic
-  for tests and demos, with zero code changes needed to switch on real cloud AI.
-
-## Known limitations of this build
-
-External API keys were not configured during this build, so the app runs end-to-end in
-**local/mock mode** — every metric and demo scenario above was verified against the
-deterministic mock provider. Add `GEMINI_API_KEY` and/or `OPENAI_API_KEY` to
-`backend/.env` to exercise the real cloud vision/LLM code paths.
+MIT — see repository for details.

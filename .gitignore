@@ -3,6 +3,9 @@
 .env.local
 **/.env
 **/.env.local
+*APIKEY
+GEMINIAPIKEY
+OPENAIAPIKEY
 
 # Python
 backend/.venv/
@@ -21,10 +24,15 @@ node_modules/
 dist/
 build/
 web-build/
+ios-native/build/
 *.tsbuildinfo
 
 # OS
 .DS_Store
+**/xcuserdata/
+
+# Local dev notes (not for the repo)
+Prompt.txt
 
 # Logs
 *.log
